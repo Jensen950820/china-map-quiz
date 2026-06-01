@@ -1,0 +1,5 @@
+build_all.py
+.ruff_cache/
+*.pyc
+__pycache__/
+.DS_Store

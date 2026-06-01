@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中国互动地图 - 省级行政区学习</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background: #1a1a2e; color: #eee; display: flex; height: 100vh; overflow: hidden; user-select: none; }
+#map-wrap { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+canvas { display: block; cursor: pointer; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+#panel { width: 350px; background: #16213e; display: flex; flex-direction: column; padding: 20px; gap: 14px; overflow-y: auto; border-left: 2px solid #0f3460; }
+h1 { font-size: 20px; text-align: center; color: #e94560; letter-spacing: 2px; }
+h2 { font-size: 13px; text-align: center; color: #888; font-weight: normal; }
+#prog-bar { background: #0f3460; border-radius: 10px; height: 10px; overflow: hidden; }
+#prog-fill { height: 100%; background: linear-gradient(90deg,#e94560,#f39c12,#2ecc71); transition: width 0.4s; width: 0%; }
+#prog-text { text-align: center; font-size: 13px; color: #aaa; }
+#quiz-area { background: #0f3460; border-radius: 12px; padding: 16px; display: none; flex-direction: column; gap: 10px; }
+#quiz-area.active { display: flex; }
+#quiz-q { font-size: 15px; text-align: center; color: #f0c040; }
+#quiz-ops { display: flex; flex-direction: column; gap: 8px; }
+.qbtn { padding: 11px 14px; border: 2px solid #1a3a6e; background: #16213e; color: #eee; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; text-align: center; }
+.qbtn:hover { border-color: #e94560; background: #1a2a4e; transform: translateX(4px); }
+.qbtn.correct { background: #27ae60; border-color: #2ecc71; }
+.qbtn.wrong { background: #c0392b; border-color: #e74c3c; }
+.qbtn:disabled { pointer-events: none; opacity: 0.7; }
+#result-t { text-align: center; font-size: 15px; min-height: 22px; color: #2ecc71; }
+#result-t.error { color: #e74c3c; }
+#hint { background: #0f3460; border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.6; color: #ccc; }
+#hint strong { color: #f0c040; }
+#hint-t { font-style: italic; color: #777; }
+.btn-row { display: flex; gap: 8px; }
+.btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.2s; }
+.btn-reset { background: #e94560; color: #fff; }
+.btn-reset:hover { background: #c0392b; }
+.mode-row { display: flex; gap: 0; border-radius: 8px; overflow: hidden; border: 2px solid #0f3460; }
+.mode-btn { flex: 1; padding: 9px 0; border: none; cursor: pointer; font-size: 14px; font-weight: bold; background: #16213e; color: #666; transition: all 0.2s; }
+.mode-btn.active { background: #e94560; color: #fff; }
+.mode-btn:first-child { border-right: 1px solid #0f3460; }
+.mode-btn:hover:not(.active) { background: #1a2a4e; color: #aaa; }
+.legend { display: flex; gap: 16px; justify-content: center; font-size: 12px; }
+.leg-dot { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #555; display: inline-block; vertical-align: middle; margin-right: 4px; }
+#score { display: flex; justify-content: space-around; font-size: 14px; color: #aaa; }
+#score span { color: #f0c040; font-weight: bold; }
+</style>
+</head>
+<body>
+<div id="map-wrap"><canvas id="cv"></canvas></div>
+<div id="panel">
+    <h1>🇨🇳 中国互动地图</h1>
+    <h2>点击省份 → 答题 → 跳转各省详情</h2>
+    <div class="mode-row">
+        <button class="mode-btn active" id="mode-pref" onclick="setMode('prefecture')">🏙 答题模式</button>
+        <button class="mode-btn" id="mode-county" onclick="setMode('county')">🗺 浏览模式</button>
+    </div>
+    <div id="prog-bar"><div id="prog-fill"></div></div>
+    <div id="prog-text">已答 0 / 34 省级行政区</div>
+    <div id="score"><div>正确 <span id="cc">0</span></div><div>错误 <span id="wc">0</span></div></div>
+    <div id="quiz-area">
+        <div id="quiz-q">这是哪个省级行政区？</div>
+        <div id="quiz-ops"></div>
+        <div id="result-t"></div>
+    </div>
+    <div id="hint"><strong>💡 操作提示</strong><br><span id="hint-t">答题模式：点击省份猜名称<br>浏览模式：点击省份直达该省地图</span></div>
+    <div class="btn-row">
+        <button class="btn btn-reset" onclick="resetAll()">🔄 重新开始</button>
+    </div>
+    <div class="legend">
+        <span><span class="leg-dot" style="background:#1e3a5f;"></span>未答</span>
+        <span><span class="leg-dot" style="background:#27ae60;"></span>答对</span>
+        <span><span class="leg-dot" style="background:#c0392b;"></span>答错</span>
+    </div>
+</div>
+
+<script src="gd_data.js"></script>
+<script src="gd_links.js"></script>
+<script src="gd_counties.js"></script>
+<script>
+const DEF = { lonMin: 73.0, lonMax: 135.5, latMin: 3.0, latMax: 54.0, scale: 12 };
+let PRJ = { ...DEF };
+let W = Math.round((DEF.lonMax - DEF.lonMin) * DEF.scale);
+let H = Math.round((DEF.latMax - DEF.latMin) * DEF.scale);
+let cv, ctx;
+
+function proj(lon, lat) { return [(lon - PRJ.lonMin) * PRJ.scale, (PRJ.latMax - lat) * PRJ.scale]; }
+
+let ansPref = {}, qTarget = null, qAnswered = false, corIdx = -1, corCnt = 0, wroCnt = 0;
+let selFeat = null, quizMode = 'prefecture';
+
+window.onload = () => {
+    cv = document.getElementById('cv'); ctx = cv.getContext('2d');
+    cv.width = W; cv.height = H;
+    resizeCvStyle();
+    window.addEventListener('resize', resizeCvStyle);
+    cv.addEventListener('click', onClick);
+    cv.addEventListener('mousemove', onMove);
+    updProg(); render();
+};
+
+function resizeCvStyle() {
+    const ct = document.getElementById('map-wrap');
+    const s = Math.min((ct.clientWidth - 20) / W, (ct.clientHeight - 20) / H);
+    cv.style.width = (W * s) + 'px'; cv.style.height = (H * s) + 'px';
+    if (ctx) render();
+}
+
+function drawFeature(feat, sc, fc, lw) {
+    const g = feat.geometry;
+    if (g.type === 'MultiPolygon') { for (const p of g.coordinates) drawRingGroup(p, sc, fc, lw); }
+    else if (g.type === 'Polygon') { drawRingGroup(g.coordinates, sc, fc, lw); }
+}
+
+function drawRingGroup(rings, sc, fc, lw) {
+    if (!rings || rings.length === 0) return;
+    ctx.beginPath();
+    for (let r = 0; r < rings.length; r++) {
+        const ring = rings[r]; if (ring.length < 3) continue;
+        const [x0, y0] = proj(ring[0][0], ring[0][1]); ctx.moveTo(x0, y0);
+        for (let i = 1; i < ring.length; i++) { const [px, py] = proj(ring[i][0], ring[i][1]); ctx.lineTo(px, py); }
+        ctx.closePath();
+    }
+    if (fc) { ctx.fillStyle = fc; ctx.fill('evenodd'); }
+    if (sc) { ctx.strokeStyle = sc; ctx.lineWidth = lw || 1; ctx.stroke(); }
+}
+
+function drawLabel(cx, cy, text, color, fs) {
+    ctx.fillStyle = color || '#eee';
+    ctx.font = 'bold ' + (fs || 13) + 'px "Microsoft YaHei"';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 3;
+    ctx.strokeText(text, cx, cy); ctx.fillText(text, cx, cy);
+}
+
+function getBestRing(feat) {
+    const g = feat.geometry, ps = g.type === 'MultiPolygon' ? g.coordinates : [g.coordinates];
+    let best = null, bestLen = 0;
+    for (const p of ps) { if (p.length > 0 && p[0].length > bestLen) { best = p[0]; bestLen = p[0].length; } }
+    return best;
+}
+
+function getAllRings(feat) {
+    const g = feat.geometry, ps = g.type === 'MultiPolygon' ? g.coordinates : [g.coordinates];
+    const rings = []; for (const p of ps) for (const r of p) rings.push(r);
+    return rings;
+}
+
+function distToNearestEdge(px, py, rings) {
+    let minD = Infinity;
+    for (const ring of rings) {
+        for (let i = 0; i < ring.length - 1; i++) {
+            const [x1, y1] = proj(ring[i][0], ring[i][1]);
+            const [x2, y2] = proj(ring[i+1][0], ring[i+1][1]);
+            const dx = x2 - x1, dy = y2 - y1, len2 = dx * dx + dy * dy;
+            if (len2 === 0) continue;
+            let t = ((px - x1) * dx + (py - y1) * dy) / len2;
+            t = Math.max(0, Math.min(1, t));
+            const cx = x1 + t * dx, cy = y1 + t * dy;
+            const d = Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+            if (d < minD) minD = d;
+        }
+    }
+    return minD;
+}
+
+function getCentroid(feat) {
+    const mr = getBestRing(feat), ar = getAllRings(feat), cands = [];
+    if (mr && mr.length > 0) {
+        let cx = 0, cy = 0;
+        for (const pt of mr) { cx += pt[0]; cy += pt[1]; }
+        cx /= mr.length; cy /= mr.length;
+        cands.push(proj(cx, cy));
+    }
+    const p = feat.properties;
+    if (p.centroid) cands.push(proj(p.centroid[0], p.centroid[1]));
+    if (p.center) cands.push(proj(p.center[0], p.center[1]));
+    let best = cands[0] || [W/2, H/2], bestDist = -1;
+    for (const c of cands) {
+        if (!c) continue;
+        const d = distToNearestEdge(c[0], c[1], ar);
+        if (d > bestDist) { bestDist = d; best = c; }
+    }
+    return best;
+}
+
+function render() {
+    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(20,50,90,0.6)'; ctx.fillRect(0, 0, W, H);
+
+    if (!GD_PREFECTURES || !GD_PREFECTURES.features) return;
+
+    GD_PREFECTURES.features.forEach(f => {
+        const id = f.properties.adcode, ans = ansPref[id];
+        let fc = '#162447';
+        if (ans) fc = ans.correct ? 'rgba(39,174,96,0.45)' : 'rgba(192,57,43,0.45)';
+        drawFeature(f, '#3a5f8a', fc, 1.0);
+        if (ans) {
+            const [cx, cy] = getCentroid(f);
+            const link = GD_LINKS[id] ? ' →' : '';
+            drawLabel(cx, cy, f.properties.name, ans.correct ? '#2ecc71' : '#e74c3c', 11);
+        }
+    });
+
+    if (selFeat) {
+        ctx.save(); ctx.shadowColor = '#f0c040'; ctx.shadowBlur = 14;
+        drawFeature(selFeat, '#f0c040', 'rgba(240,192,64,0.08)', 3);
+        ctx.restore();
+    }
+
+    // 首都标记
+    const bj = GD_PREFECTURES.features.find(f => f.properties.adcode === 110000);
+    if (bj) { const [cx, cy] = getCentroid(bj); drawLabel(cx, cy - 14, '★', '#f0c040', 18); }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '16px "Microsoft YaHei"';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillText('中国 · 省级行政区', W - 12, H - 10);
+}
+
+function ptInRing(px, py, ring) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, yi] = proj(ring[i][0], ring[i][1]);
+        const [xj, yj] = proj(ring[j][0], ring[j][1]);
+        if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+}
+
+function ptInFeature(px, py, feat) {
+    const g = feat.geometry, ps = g.type === 'MultiPolygon' ? g.coordinates : [g.coordinates];
+    for (const poly of ps) {
+        if (poly.length > 0 && ptInRing(px, py, poly[0])) {
+            let inHole = false;
+            for (let i = 1; i < poly.length; i++) { if (ptInRing(px, py, poly[i])) { inHole = true; break; } }
+            if (!inHole) return true;
+        }
+    }
+    return false;
+}
+
+function findFeature(mx, my) {
+    if (!GD_PREFECTURES || !GD_PREFECTURES.features) return null;
+    for (const f of GD_PREFECTURES.features) { if (ptInFeature(mx, my, f)) return f; }
+    return null;
+}
+
+let hoverPrefId = null, hoverRAF = false;
+
+function onMove(e) {
+    if (hoverRAF) return;
+    hoverRAF = true;
+    requestAnimationFrame(() => {
+        hoverRAF = false;
+        const rect = cv.getBoundingClientRect(), sx = W / rect.width, sy = H / rect.height;
+        const mx = (e.clientX - rect.left) * sx, my = (e.clientY - rect.top) * sy;
+        const f = findFeature(mx, my), nid = f ? f.properties.adcode : null;
+        if (nid !== hoverPrefId) {
+            hoverPrefId = nid;
+            render();
+            if (f) { drawFeature(f, '#f0c040', 'rgba(240,192,64,0.12)', 2); }
+        }
+    });
+}
+
+function onClick(e) {
+    if (document.getElementById('quiz-area').classList.contains('active')) return;
+    const rect = cv.getBoundingClientRect(), sx = W / rect.width, sy = H / rect.height;
+    const mx = (e.clientX - rect.left) * sx, my = (e.clientY - rect.top) * sy;
+    const f = findFeature(mx, my);
+    if (!f) return;
+    const id = f.properties.adcode;
+    const link = GD_LINKS[id];
+
+    if (quizMode === 'county') {
+        // 浏览模式：直接跳转
+        if (link) openProvince(link);
+        return;
+    }
+
+    // 答题模式
+    if (ansPref[id]) {
+        if (link) openProvince(link);
+    } else {
+        startQuiz(f);
+    }
+}
+
+function openProvince(short) {
+    const url = '../' + short + '/map.html';
+    if (confirm('是否跳转到【' + short + '】的详细地图？')) window.open(url, '_self');
+}
+
+function startQuiz(feat) {
+    qTarget = { adcode: feat.properties.adcode };
+    qAnswered = false;
+    selFeat = feat;
+    render();
+    const allNames = GD_PREFECTURES.features.map(f => f.properties.name);
+    const cor = feat.properties.name, w = allNames.filter(n => n !== cor);
+    shuffle(w);
+    const ops = shuffleArr([cor, ...w.slice(0, 3)]);
+    corIdx = ops.indexOf(cor);
+    showQuiz('这是哪个省级行政区？', ops);
+}
+
+function showQuiz(q, ops) {
+    const a = document.getElementById('quiz-area'); a.classList.add('active');
+    document.getElementById('quiz-q').textContent = q;
+    document.getElementById('result-t').textContent = '';
+    document.getElementById('result-t').classList.remove('error');
+    const c = document.getElementById('quiz-ops'); c.innerHTML = '';
+    ops.forEach((o, i) => { const b = document.createElement('button'); b.className = 'qbtn'; b.textContent = o; b.onclick = () => selOpt(i); c.appendChild(b); });
+}
+
+function selOpt(i) {
+    if (qAnswered) return;
+    qAnswered = true;
+    const cor = (i === corIdx);
+    document.querySelectorAll('.qbtn').forEach((b, j) => {
+        b.disabled = true;
+        if (j === corIdx) b.classList.add('correct');
+        if (j === i && !cor) b.classList.add('wrong');
+    });
+    const r = document.getElementById('result-t');
+    if (cor) { r.textContent = '✅ 答对了！'; r.classList.remove('error'); corCnt++; }
+    else { r.textContent = '❌ 答错了'; r.classList.add('error'); wroCnt++; }
+    document.getElementById('cc').textContent = corCnt;
+    document.getElementById('wc').textContent = wroCnt;
+    ansPref[qTarget.adcode] = { correct: cor };
+    updProg(); render();
+
+    setTimeout(() => {
+        document.getElementById('quiz-area').classList.remove('active');
+        selFeat = null; qTarget = null; qAnswered = false;
+        if (Object.keys(ansPref).length === 34) {
+            document.getElementById('hint-t').innerHTML = '🎉 全部答完！点击已标注省份直达各省地图';
+        }
+        render();
+    }, 1500);
+}
+
+function updProg() {
+    const ap = Object.keys(ansPref).length;
+    document.getElementById('prog-text').textContent = '已答 ' + ap + ' / 34 省级行政区';
+    document.getElementById('prog-fill').style.width = (ap / 34 * 100) + '%';
+}
+
+function setMode(mode) {
+    quizMode = mode;
+    document.getElementById('mode-pref').classList.toggle('active', mode === 'prefecture');
+    document.getElementById('mode-county').classList.toggle('active', mode === 'county');
+    document.getElementById('hint-t').innerHTML = mode === 'county'
+        ? '<strong>浏览模式</strong><br>点击任意省份直接跳转到该省详细地图'
+        : '<strong>答题模式</strong><br>先猜省份名称，答对后点击跳转该省地图';
+    updProg();
+}
+
+function resetAll() {
+    ansPref = {}; corCnt = 0; wroCnt = 0;
+    qTarget = null; qAnswered = false; selFeat = null;
+    document.getElementById('quiz-area').classList.remove('active');
+    document.getElementById('cc').textContent = '0'; document.getElementById('wc').textContent = '0';
+    document.getElementById('hint-t').innerHTML = '答题模式：点击省份猜名称<br>浏览模式：点击省份直达该省地图';
+    updProg(); render();
+}
+
+function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } }
+function shuffleArr(arr) { shuffle(arr); return arr; }
+</script>
+</body>
+</html>

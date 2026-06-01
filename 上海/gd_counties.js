@@ -1,0 +1,1 @@
+const GD_COUNTIES = {"310101": null, "310104": null, "310105": null, "310106": null, "310107": null, "310109": null, "310110": null, "310112": null, "310113": null, "310114": null, "310115": null, "310116": null, "310117": null, "310118": null, "310120": null, "310151": null};

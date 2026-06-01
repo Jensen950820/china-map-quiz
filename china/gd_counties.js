@@ -1,0 +1,1 @@
+const GD_COUNTIES = {};
