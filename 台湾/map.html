@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>福建省互动地图</title>
+<title>台湾省互动地图</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root { --bg: #f2f2f7; --panel-bg: rgba(255,255,255,0.78); --panel-border: rgba(0,0,0,0.06); --text: #1d1d1f; --text2: #86868b; --text3: #aeaeb2; --card-bg: rgba(0,0,0,0.04); --card-border: rgba(0,0,0,0.06); --prog-track: rgba(0,0,0,0.06); --btn-bg: rgba(0,0,0,0.04); --btn-border: rgba(0,0,0,0.08); --btn-hover: rgba(0,0,0,0.08); --seg-bg: rgba(0,0,0,0.04); --seg-border: rgba(0,0,0,0.08); }
@@ -79,8 +79,8 @@ h2 { font-size: 12px; text-align: center; color: var(--text2); font-weight: 400;
 <body data-theme="light">
 <div id="map-wrap"><canvas id="cv"></canvas></div>
 <div id="panel">
-    <h1>福建互动地图</h1>
-    <h2>点击区域 · 选择题 · 认识福建</h2>
+    <h1>台湾省互动地图</h1>
+    <h2>点击区域 · 选择题 · 认识台湾</h2>
     <div class="mode-row">
         <button class="mode-btn active" id="mode-pref" onclick="setMode('prefecture')">地级</button>
         <button class="mode-btn" id="mode-county" onclick="setMode('county')">区/县</button>
@@ -90,7 +90,7 @@ h2 { font-size: 12px; text-align: center; color: var(--text2); font-weight: 400;
         <button class="theme-btn" id="theme-dark" onclick="setTheme('dark')">深色</button>
     </div>
     <div id="prog-bar"><div id="prog-fill"></div></div>
-    <div id="prog-text">已答 0 / 9 地级</div>
+    <div id="prog-text">已答 0 / 22 地级</div>
     <div id="score"><div>正确 <span id="cc">0</span></div><div>错误 <span id="wc">0</span></div></div>
     <div id="quiz-area">
         <div id="quiz-q">这是哪个行政区？</div>
@@ -113,7 +113,7 @@ h2 { font-size: 12px; text-align: center; color: var(--text2); font-weight: 400;
 <script src="gd_data.js"></script>
 <script src="gd_counties.js"></script>
 <script>
-const DEF={lonMin:115.56,lonMax:121.02,latMin:23.26,latMax:28.6,scale:143};
+const DEF={lonMin:118.0,lonMax:122.2,latMin:21.8,latMax:25.5,scale:143};
 let PRJ={...DEF};
 let W=Math.round((DEF.lonMax-DEF.lonMin)*DEF.scale),H=Math.round((DEF.latMax-DEF.latMin)*DEF.scale),cv,ctx;
 const TC={light:{bg:'#e8e8ed',ov:'rgba(255,255,255,0.5)',fl:'#d5d5dc',flC:'#c8c8d0',st:'#c0c0c6',stC:'#b0b0b8',cf:'rgba(48,209,88,0.25)',wf:'rgba(255,69,58,0.25)',cfC:'rgba(48,209,88,0.3)',wfC:'rgba(255,69,58,0.3)',lb:'#1d1d1f',tc:'rgba(0,0,0,0.25)'},dark:{bg:'#000',ov:'rgba(255,255,255,0.02)',fl:'#1c1c24',flC:'#262632',st:'#3a3a44',stC:'#4a4a55',cf:'rgba(48,209,88,0.3)',wf:'rgba(255,69,58,0.3)',cfC:'rgba(48,209,88,0.35)',wfC:'rgba(255,69,58,0.35)',lb:'#f5f5f7',tc:'rgba(255,255,255,0.4)'}};
@@ -132,10 +132,10 @@ function getBestRing(feat){const g=feat.geometry,ps=g.type==='MultiPolygon'?g.co
 function getAllRings(feat){const g=feat.geometry,ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];const rings=[];for(const p of ps)for(const r of p)rings.push(r);return rings;}
 function distToNearestEdge(px,py,rings){let minD=Infinity;for(const ring of rings){for(let i=0;i<ring.length-1;i++){const[x1,y1]=proj(ring[i][0],ring[i][1]);const[x2,y2]=proj(ring[i+1][0],ring[i+1][1]);const dx=x2-x1,dy=y2-y1,len2=dx*dx+dy*dy;if(len2===0)continue;let t=((px-x1)*dx+(py-y1)*dy)/len2;t=Math.max(0,Math.min(1,t));const cx=x1+t*dx,cy=y1+t*dy;const d=Math.sqrt((px-cx)*(px-cx)+(py-cy)*(py-cy));if(d<minD)minD=d;}}return minD;}
 function getCentroid(feat){const mr=getBestRing(feat),ar=getAllRings(feat),cands=[];if(mr&&mr.length>0){let cx=0,cy=0;for(const pt of mr){cx+=pt[0];cy+=pt[1];}cx/=mr.length;cy/=mr.length;cands.push(proj(cx,cy));}const p=feat.properties;if(p.centroid)cands.push(proj(p.centroid[0],p.centroid[1]));if(p.center)cands.push(proj(p.center[0],p.center[1]));let best=cands[0]||[W/2,H/2],bestDist=-1;for(const c of cands){if(!c)continue;const d=distToNearestEdge(c[0],c[1],ar);if(d>bestDist){bestDist=d;best=c;}}return best;}
-function renderProvince(){const c=TC[theme];ctx.fillStyle=c.bg;ctx.fillRect(0,0,W,H);ctx.fillStyle=c.ov;ctx.fillRect(0,0,W,H);if(!GD_PREFECTURES||!GD_PREFECTURES.features)return;GD_PREFECTURES.features.forEach(f=>{const id=f.properties.adcode,ans=ansPref[id];let fc=c.fl;if(ans)fc=ans.correct?c.cf:c.wf;drawFeature(f,c.st,fc,1);if(ans){const[cx,cy]=getCentroid(f);drawLabel(cx,cy,f.properties.name,ans.correct?'#30D158':'#FF453A',11);}});const cap=GD_PREFECTURES.features.find(f=>f.properties.adcode===350100);if(cap){const[cx,cy]=getCentroid(cap);drawLabel(cx,cy-13,'★','#FFD60A',16);}if(selFeat){ctx.save();ctx.shadowColor='#007AFF';ctx.shadowBlur=16;drawFeature(selFeat,'#007AFF','rgba(0,122,255,0.06)',3);ctx.restore();}}
+function renderProvince(){const c=TC[theme];ctx.fillStyle=c.bg;ctx.fillRect(0,0,W,H);ctx.fillStyle=c.ov;ctx.fillRect(0,0,W,H);if(!GD_PREFECTURES||!GD_PREFECTURES.features)return;GD_PREFECTURES.features.forEach(f=>{const id=f.properties.adcode,ans=ansPref[id];let fc=c.fl;if(ans)fc=ans.correct?c.cf:c.wf;drawFeature(f,c.st,fc,1);if(ans){const[cx,cy]=getCentroid(f);drawLabel(cx,cy,f.properties.name,ans.correct?'#30D158':'#FF453A',11);}});if(selFeat){ctx.save();ctx.shadowColor='#007AFF';ctx.shadowBlur=16;drawFeature(selFeat,'#007AFF','rgba(0,122,255,0.06)',3);ctx.restore();}}
 function renderCounty(){const c=TC[theme];ctx.fillStyle=c.bg;ctx.fillRect(0,0,W,H);if(countyFeatures.length>0){countyFeatures.forEach((f,i)=>{const ans=ansCounty[activeId]&&ansCounty[activeId][i];let fc=c.flC;if(ans!==undefined)fc=ans?c.cfC:c.wfC;drawFeature(f,c.stC,fc,1.2);if(ans!==undefined){const[cx,cy]=getCentroid(f);drawLabel(cx,cy,f.properties.name,ans?'#30D158':'#FF453A',11);}});}if(selFeat){ctx.save();ctx.shadowColor='#007AFF';ctx.shadowBlur=16;drawFeature(selFeat,'#007AFF','rgba(0,122,255,0.08)',3);ctx.restore();}}
 function render(){if(view==='province')renderProvince();else renderCounty();drawTitle();}
-function drawTitle(){ctx.fillStyle=TC[theme].tc;ctx.font='14px -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(view==='province'?'福建 · 地级':'福建 · '+activeName+' · 县级',W-12,H-10);}
+function drawTitle(){ctx.fillStyle=TC[theme].tc;ctx.font='14px -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(view==='province'?'台湾 · 地级':'台湾 · '+activeName+' · 县级',W-12,H-10);}
 function ptInRing(px,py,ring){let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const[xi,yi]=proj(ring[i][0],ring[i][1]);const[xj,yj]=proj(ring[j][0],ring[j][1]);if((yi>py)!==(yj>py)&&px<(xj-xi)*(py-yi)/(yj-yi)+xi)inside=!inside;}return inside;}
 function ptInFeature(px,py,feat){const g=feat.geometry,ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];for(const poly of ps){if(poly.length>0&&ptInRing(px,py,poly[0])){let inHole=false;for(let i=1;i<poly.length;i++){if(ptInRing(px,py,poly[i])){inHole=true;break;}}if(!inHole)return true;}}return false;}
 function findPrefFeature(mx,my){if(!GD_PREFECTURES||!GD_PREFECTURES.features)return null;for(const f of GD_PREFECTURES.features){if(ptInFeature(mx,my,f))return f;}return null;}
@@ -150,7 +150,7 @@ function selOpt(i){if(qAnswered)return;qAnswered=true;const cor=(i===corIdx);con
 loadWikiIntro(corName);}
 async function switchToCounty(adcode,name){document.getElementById('quiz-area').classList.remove('active');qTarget=null;qAnswered=false;selFeat=null;activeId=adcode;activeName=name;countyFeatures=[];hoverCountyIdx=-1;view='county';document.getElementById('btn-back').classList.add('show');const cd=GD_COUNTIES[String(adcode)];if(cd&&cd.features)countyFeatures=cd.features;const total=countyFeatures.length,prefFeat=GD_PREFECTURES.features.find(f=>f.properties.adcode===adcode);if(prefFeat)fitBoundsFeat(prefFeat);document.getElementById('hint-t').innerHTML=total>0?'当前：<strong>'+name+'</strong><br>共 '+total+' 个县级 · 点击答题，空白返回':'当前：<strong>'+name+'</strong><br>无下级划分 · 点击返回省级';updProg();render();}
 function backToProvince(){document.getElementById('quiz-area').classList.remove('active');qTarget=null;qAnswered=false;selFeat=null;activeId=null;activeName='';countyFeatures=[];hoverPrefId=null;hoverCountyIdx=-1;view='province';resetProjection();document.getElementById('btn-back').classList.remove('show');document.getElementById('hint-t').innerHTML=quizMode==='county'?'区/县模式<br>点击地级行政区直接进入县级':'地级模式<br>先答地级名称，再进入区/县';updProg();render();}
-function updProg(){const ap=Object.keys(ansPref).length;let tc=0,ac=0;if(view==='county'&&activeId){tc=countyFeatures.length;ac=Object.keys(ansCounty[activeId]||{}).length;}document.getElementById('prog-text').textContent=view==='province'?'已答 '+ap+' / 9 地级':'已答 '+ac+' / '+tc+' 县级';document.getElementById('prog-fill').style.width=(view==='province'?(ap/9*100):(tc>0?ac/tc*100:0))+'%';}
+function updProg(){const ap=Object.keys(ansPref).length;let tc=0,ac=0;if(view==='county'&&activeId){tc=countyFeatures.length;ac=Object.keys(ansCounty[activeId]||{}).length;}document.getElementById('prog-text').textContent=view==='province'?'已答 '+ap+' / 22 地级':'已答 '+ac+' / '+tc+' 县级';document.getElementById('prog-fill').style.width=(view==='province'?(ap/22*100):(tc>0?ac/tc*100:0))+'%';}
 function setMode(mode){quizMode=mode;document.getElementById('mode-pref').classList.toggle('active',mode==='prefecture');document.getElementById('mode-county').classList.toggle('active',mode==='county');if(view==='county')backToProvince();document.getElementById('hint-t').innerHTML=mode==='county'?'区/县模式<br>点击地级行政区直接进入县级':'地级模式<br>先答地级名称，再进入区/县';updProg();}
 function resetAll(){ansPref={};ansCounty={};corCnt=0;wroCnt=0;countyFeatures=[];view='province';activeId=null;activeName='';qTarget=null;qAnswered=false;selFeat=null;resetProjection();document.getElementById('quiz-area').classList.remove('active');document.getElementById('quiz-intro').style.display='none';document.getElementById('btn-next').style.display='none';document.getElementById('btn-back').classList.remove('show');document.getElementById('cc').textContent='0';document.getElementById('wc').textContent='0';document.getElementById('hint-t').innerHTML='点击地图上任意区域开始答题';updProg();render();}
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}

@@ -6,52 +6,85 @@
 <title>中国互动地图 - 省级行政区学习</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background: #1a1a2e; color: #eee; display: flex; height: 100vh; overflow: hidden; user-select: none; }
+:root { --bg: #f2f2f7; --panel-bg: rgba(255,255,255,0.78); --panel-border: rgba(0,0,0,0.06); --text: #1d1d1f; --text2: #86868b; --text3: #aeaeb2; --card-bg: rgba(0,0,0,0.04); --card-border: rgba(0,0,0,0.06); --prog-track: rgba(0,0,0,0.06); --btn-bg: rgba(0,0,0,0.04); --btn-border: rgba(0,0,0,0.08); --btn-hover: rgba(0,0,0,0.08); --seg-bg: rgba(0,0,0,0.04); --seg-border: rgba(0,0,0,0.08); }
+[data-theme="dark"] { --bg: #000; --panel-bg: rgba(28,28,30,0.82); --panel-border: rgba(255,255,255,0.06); --text: #f5f5f7; --text2: #98989d; --text3: #8e8e93; --card-bg: rgba(255,255,255,0.05); --card-border: rgba(255,255,255,0.06); --prog-track: rgba(255,255,255,0.08); --btn-bg: rgba(255,255,255,0.04); --btn-border: rgba(255,255,255,0.08); --btn-hover: rgba(255,255,255,0.08); --seg-bg: rgba(255,255,255,0.03); --seg-border: rgba(255,255,255,0.08); }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; user-select: none; }
 #map-wrap { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
-canvas { display: block; cursor: pointer; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
-#panel { width: 350px; background: #16213e; display: flex; flex-direction: column; padding: 20px; gap: 14px; overflow-y: auto; border-left: 2px solid #0f3460; }
-h1 { font-size: 20px; text-align: center; color: #e94560; letter-spacing: 2px; }
-h2 { font-size: 13px; text-align: center; color: #888; font-weight: normal; }
-#prog-bar { background: #0f3460; border-radius: 10px; height: 10px; overflow: hidden; }
-#prog-fill { height: 100%; background: linear-gradient(90deg,#e94560,#f39c12,#2ecc71); transition: width 0.4s; width: 0%; }
-#prog-text { text-align: center; font-size: 13px; color: #aaa; }
-#quiz-area { background: #0f3460; border-radius: 12px; padding: 16px; display: none; flex-direction: column; gap: 10px; }
+canvas { display: block; cursor: pointer; border-radius: 16px; touch-action: manipulation; }
+#panel { width: 380px; background: var(--panel-bg); backdrop-filter: blur(50px) saturate(180%); -webkit-backdrop-filter: blur(50px) saturate(180%); display: flex; flex-direction: column; padding: 24px; gap: 14px; overflow-y: auto; border-left: 1px solid var(--panel-border); }
+h1 { font-size: 18px; text-align: center; color: var(--text); font-weight: 600; letter-spacing: 1px; }
+h2 { font-size: 12px; text-align: center; color: var(--text2); font-weight: 400; }
+#prog-bar { background: var(--prog-track); border-radius: 3px; height: 4px; overflow: hidden; }
+#prog-fill { height: 100%; background: linear-gradient(90deg, #FF453A, #FFD60A, #30D158); border-radius: 3px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+#prog-text { text-align: center; font-size: 12px; color: var(--text2); font-weight: 500; }
+#quiz-area { background: var(--card-bg); border-radius: 14px; padding: 16px; display: none; flex-direction: column; gap: 10px; border: 1px solid var(--card-border); }
 #quiz-area.active { display: flex; }
-#quiz-q { font-size: 15px; text-align: center; color: #f0c040; }
+#quiz-q { font-size: 14px; text-align: center; color: var(--text); font-weight: 500; }
 #quiz-ops { display: flex; flex-direction: column; gap: 8px; }
-.qbtn { padding: 11px 14px; border: 2px solid #1a3a6e; background: #16213e; color: #eee; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; text-align: center; }
-.qbtn:hover { border-color: #e94560; background: #1a2a4e; transform: translateX(4px); }
-.qbtn.correct { background: #27ae60; border-color: #2ecc71; }
-.qbtn.wrong { background: #c0392b; border-color: #e74c3c; }
-.qbtn:disabled { pointer-events: none; opacity: 0.7; }
-#result-t { text-align: center; font-size: 15px; min-height: 22px; color: #2ecc71; }
-#result-t.error { color: #e74c3c; }
-#hint { background: #0f3460; border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.6; color: #ccc; }
-#hint strong { color: #f0c040; }
-#hint-t { font-style: italic; color: #777; }
-.btn-row { display: flex; gap: 8px; }
-.btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.2s; }
-.btn-reset { background: #e94560; color: #fff; }
-.btn-reset:hover { background: #c0392b; }
-.mode-row { display: flex; gap: 0; border-radius: 8px; overflow: hidden; border: 2px solid #0f3460; }
-.mode-btn { flex: 1; padding: 9px 0; border: none; cursor: pointer; font-size: 14px; font-weight: bold; background: #16213e; color: #666; transition: all 0.2s; }
-.mode-btn.active { background: #e94560; color: #fff; }
-.mode-btn:first-child { border-right: 1px solid #0f3460; }
-.mode-btn:hover:not(.active) { background: #1a2a4e; color: #aaa; }
-.legend { display: flex; gap: 16px; justify-content: center; font-size: 12px; }
-.leg-dot { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #555; display: inline-block; vertical-align: middle; margin-right: 4px; }
-#score { display: flex; justify-content: space-around; font-size: 14px; color: #aaa; }
-#score span { color: #f0c040; font-weight: bold; }
+.qbtn { padding: 12px 14px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all 0.2s ease; text-align: center; font-weight: 500; }
+.qbtn:hover { border-color: #007AFF; background: rgba(0,122,255,0.1); transform: scale(1.01); }
+.qbtn.correct { background: rgba(48,209,88,0.2); border-color: #30D158; color: #30D158; }
+.qbtn.wrong { background: rgba(255,69,58,0.2); border-color: #FF453A; color: #FF453A; }
+.qbtn:disabled { pointer-events: none; opacity: 0.5; }
+#result-t { text-align: center; font-size: 14px; min-height: 20px; color: #30D158; font-weight: 500; }
+#result-t.error { color: #FF453A; }
+#quiz-intro { display: none; font-size: 13px; line-height: 1.6; color: var(--text2); padding: 10px 0; border-top: 1px solid var(--card-border); margin-top: 2px; }
+#quiz-intro strong { color: var(--text); font-weight: 600; }
+#btn-next { width: 100%; padding: 10px 14px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; background: #007AFF; color: #fff; display: none; transition: all 0.2s ease; }
+#btn-next:hover { background: #0056CC; transform: scale(1.01); }
+
+#hint { background: var(--card-bg); border-radius: 14px; padding: 14px 16px; font-size: 12px; line-height: 1.7; color: var(--text2); border: 1px solid var(--card-border); }
+#hint strong { color: var(--text); font-weight: 600; }
+#hint-t { font-style: italic; color: var(--text3); }
+.btn-row { display: flex; gap: 10px; }
+.btn { flex: 1; padding: 10px 14px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s ease; }
+.btn-reset { background: rgba(255,69,58,0.12); color: #FF453A; }
+.btn-reset:hover { background: rgba(255,69,58,0.22); }
+.mode-row { display: flex; gap: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--seg-border); margin-bottom: 2px; }
+.mode-btn { flex: 1; padding: 8px 0; border: none; cursor: pointer; font-size: 13px; font-weight: 600; background: var(--seg-bg); color: var(--text2); transition: all 0.2s ease; }
+.mode-btn.active { background: #007AFF; color: #fff; }
+.mode-btn:first-child { border-right: 1px solid var(--seg-border); }
+.mode-btn:hover:not(.active) { background: var(--btn-hover); color: var(--text); }
+.theme-row { display: flex; gap: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--seg-border); }
+.theme-btn { flex: 1; padding: 6px 0; border: none; cursor: pointer; font-size: 12px; font-weight: 600; background: var(--seg-bg); color: var(--text2); transition: all 0.2s ease; }
+.theme-btn.active { background: #007AFF; color: #fff; }
+.theme-btn:first-child { border-right: 1px solid var(--seg-border); }
+.theme-btn:hover:not(.active) { background: var(--btn-hover); color: var(--text); }
+.legend { display: flex; gap: 14px; justify-content: center; font-size: 11px; color: var(--text2); }
+.leg-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; vertical-align: middle; margin-right: 4px; }
+#score { display: flex; justify-content: space-around; font-size: 13px; color: var(--text2); }
+#score span { color: var(--text); font-weight: 600; }
+
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+  #map-wrap { flex: none; width: 100%; height: 52vh; }
+  #panel { width: 100%; height: 48vh; padding: 12px 16px 28px 16px; gap: 8px; border-left: none; border-top: 1px solid var(--panel-border); border-radius: 16px 16px 0 0; }
+  h1 { font-size: 16px; }
+  h2 { font-size: 11px; }
+  .mode-btn { padding: 10px 0; font-size: 14px; }
+  .theme-btn { padding: 8px 0; font-size: 13px; }
+  .qbtn { padding: 14px 14px; font-size: 15px; }
+  .btn { padding: 12px 14px; font-size: 14px; }
+  #hint { font-size: 13px; padding: 12px 14px; }
+  #quiz-q { font-size: 15px; }
+  #prog-text { font-size: 13px; }
+  .legend { font-size: 12px; }
+}
+
 </style>
 </head>
-<body>
+<body data-theme="light">
 <div id="map-wrap"><canvas id="cv"></canvas></div>
 <div id="panel">
-    <h1>🇨🇳 中国互动地图</h1>
-    <h2>点击省份 → 答题 → 跳转各省详情</h2>
+    <h1>中国互动地图</h1>
+    <h2>点击省份 · 答题 · 跳转各省详情</h2>
     <div class="mode-row">
-        <button class="mode-btn active" id="mode-pref" onclick="setMode('prefecture')">🏙 答题模式</button>
-        <button class="mode-btn" id="mode-county" onclick="setMode('county')">🗺 浏览模式</button>
+        <button class="mode-btn active" id="mode-pref" onclick="setMode('prefecture')">答题模式</button>
+        <button class="mode-btn" id="mode-county" onclick="setMode('county')">浏览模式</button>
+    </div>
+    <div class="theme-row">
+        <button class="theme-btn active" id="theme-light" onclick="setTheme('light')">浅色</button>
+        <button class="theme-btn" id="theme-dark" onclick="setTheme('dark')">深色</button>
     </div>
     <div id="prog-bar"><div id="prog-fill"></div></div>
     <div id="prog-text">已答 0 / 34 省级行政区</div>
@@ -60,15 +93,17 @@ h2 { font-size: 13px; text-align: center; color: #888; font-weight: normal; }
         <div id="quiz-q">这是哪个省级行政区？</div>
         <div id="quiz-ops"></div>
         <div id="result-t"></div>
+        <div id="quiz-intro"></div>
+        <button class="btn" id="btn-next" onclick="nextQuiz()">下一个</button>
     </div>
-    <div id="hint"><strong>💡 操作提示</strong><br><span id="hint-t">答题模式：点击省份猜名称<br>浏览模式：点击省份直达该省地图</span></div>
+    <div id="hint"><strong>操作提示</strong><br><span id="hint-t">答题模式：点击省份猜名称<br>浏览模式：点击省份直达该省地图</span></div>
     <div class="btn-row">
-        <button class="btn btn-reset" onclick="resetAll()">🔄 重新开始</button>
+        <button class="btn btn-reset" onclick="resetAll()">重新开始</button>
     </div>
     <div class="legend">
-        <span><span class="leg-dot" style="background:#1e3a5f;"></span>未答</span>
-        <span><span class="leg-dot" style="background:#27ae60;"></span>答对</span>
-        <span><span class="leg-dot" style="background:#c0392b;"></span>答错</span>
+        <span><span class="leg-dot" id="leg-unans" style="background:#d5d5dc;"></span>未答</span>
+        <span><span class="leg-dot" style="background:#30D158;"></span>答对</span>
+        <span><span class="leg-dot" style="background:#FF453A;"></span>答错</span>
     </div>
 </div>
 
@@ -81,6 +116,10 @@ let PRJ = { ...DEF };
 let W = Math.round((DEF.lonMax - DEF.lonMin) * DEF.scale);
 let H = Math.round((DEF.latMax - DEF.latMin) * DEF.scale);
 let cv, ctx;
+
+const TC={light:{bg:'#e8e8ed',ov:'rgba(255,255,255,0.5)',fl:'#d5d5dc',st:'#c0c0c6',cf:'rgba(48,209,88,0.25)',wf:'rgba(255,69,58,0.25)',lb:'#1d1d1f',tc:'rgba(0,0,0,0.25)'},dark:{bg:'#000',ov:'rgba(255,255,255,0.02)',fl:'#1c1c24',st:'#3a3a44',cf:'rgba(48,209,88,0.3)',wf:'rgba(255,69,58,0.3)',lb:'#f5f5f7',tc:'rgba(255,255,255,0.4)'}};
+let theme='light';
+function setTheme(t){theme=t;document.body.setAttribute('data-theme',t);document.getElementById('theme-light').classList.toggle('active',t==='light');document.getElementById('theme-dark').classList.toggle('active',t==='dark');document.getElementById('leg-unans').style.background=TC[t].fl;render();}
 
 function proj(lon, lat) { return [(lon - PRJ.lonMin) * PRJ.scale, (PRJ.latMax - lat) * PRJ.scale]; }
 
@@ -124,10 +163,10 @@ function drawRingGroup(rings, sc, fc, lw) {
 }
 
 function drawLabel(cx, cy, text, color, fs) {
-    ctx.fillStyle = color || '#eee';
-    ctx.font = 'bold ' + (fs || 13) + 'px "Microsoft YaHei"';
+    ctx.fillStyle = color || TC[theme].lb;
+    ctx.font = (fs || 13) + 'px -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 2.5;
     ctx.strokeText(text, cx, cy); ctx.fillText(text, cx, cy);
 }
 
@@ -183,36 +222,36 @@ function getCentroid(feat) {
 }
 
 function render() {
-    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(20,50,90,0.6)'; ctx.fillRect(0, 0, W, H);
+    const c=TC[theme];
+    ctx.fillStyle = c.bg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = c.ov; ctx.fillRect(0, 0, W, H);
 
     if (!GD_PREFECTURES || !GD_PREFECTURES.features) return;
 
     GD_PREFECTURES.features.forEach(f => {
         const id = f.properties.adcode, ans = ansPref[id];
-        let fc = '#162447';
-        if (ans) fc = ans.correct ? 'rgba(39,174,96,0.45)' : 'rgba(192,57,43,0.45)';
-        drawFeature(f, '#3a5f8a', fc, 1.0);
+        let fc = c.fl;
+        if (ans) fc = ans.correct ? c.cf : c.wf;
+        drawFeature(f, c.st, fc, 0.8);
         if (ans) {
             const [cx, cy] = getCentroid(f);
-            const link = GD_LINKS[id] ? ' →' : '';
-            drawLabel(cx, cy, f.properties.name, ans.correct ? '#2ecc71' : '#e74c3c', 11);
+            const link = GD_LINKS[id] ? ' \u2192' : '';
+            drawLabel(cx, cy, f.properties.name, ans.correct ? '#30D158' : '#FF453A', 11);
         }
     });
 
     if (selFeat) {
-        ctx.save(); ctx.shadowColor = '#f0c040'; ctx.shadowBlur = 14;
-        drawFeature(selFeat, '#f0c040', 'rgba(240,192,64,0.08)', 3);
+        ctx.save(); ctx.shadowColor = '#007AFF'; ctx.shadowBlur = 16;
+        drawFeature(selFeat, '#007AFF', 'rgba(0,122,255,0.06)', 3);
         ctx.restore();
     }
 
-    // 首都标记
     const bj = GD_PREFECTURES.features.find(f => f.properties.adcode === 110000);
-    if (bj) { const [cx, cy] = getCentroid(bj); drawLabel(cx, cy - 14, '★', '#f0c040', 18); }
+    if (bj) { const [cx, cy] = getCentroid(bj); drawLabel(cx, cy - 13, '\u2605', '#FFD60A', 16); }
 
-    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '16px "Microsoft YaHei"';
+    ctx.fillStyle = TC[theme].tc; ctx.font = '14px -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    ctx.fillText('中国 · 省级行政区', W - 12, H - 10);
+    ctx.fillText('\u4e2d\u56fd \u00b7 \u7701\u7ea7\u884c\u653f\u533a', W - 12, H - 10);
 }
 
 function ptInRing(px, py, ring) {
@@ -256,13 +295,13 @@ function onMove(e) {
         if (nid !== hoverPrefId) {
             hoverPrefId = nid;
             render();
-            if (f) { drawFeature(f, '#f0c040', 'rgba(240,192,64,0.12)', 2); }
+            if (f) { drawFeature(f, '#007AFF', 'rgba(0,122,255,0.08)', 2); }
         }
     });
 }
 
 function onClick(e) {
-    if (document.getElementById('quiz-area').classList.contains('active')) return;
+    if(document.getElementById('quiz-area').classList.contains('active')){document.getElementById('quiz-area').classList.remove('active');document.getElementById('quiz-intro').style.display='none';document.getElementById('btn-next').style.display='none';document.getElementById('quiz-intro').style.display='none';document.getElementById('btn-next').style.display='none';selFeat = null;qTarget = null;qAnswered = false; }
     const rect = cv.getBoundingClientRect(), sx = W / rect.width, sy = H / rect.height;
     const mx = (e.clientX - rect.left) * sx, my = (e.clientY - rect.top) * sy;
     const f = findFeature(mx, my);
@@ -315,27 +354,29 @@ function selOpt(i) {
     if (qAnswered) return;
     qAnswered = true;
     const cor = (i === corIdx);
-    document.querySelectorAll('.qbtn').forEach((b, j) => {
+    const allBtns = document.querySelectorAll('.qbtn');
+    allBtns.forEach((b, j) => {
         b.disabled = true;
         if (j === corIdx) b.classList.add('correct');
         if (j === i && !cor) b.classList.add('wrong');
     });
     const r = document.getElementById('result-t');
-    if (cor) { r.textContent = '✅ 答对了！'; r.classList.remove('error'); corCnt++; }
-    else { r.textContent = '❌ 答错了'; r.classList.add('error'); wroCnt++; }
+    const corName = allBtns[corIdx].textContent;
+    if (cor) {
+        r.textContent = '\u2713 正确！';
+        r.classList.remove('error');
+        corCnt++;
+    } else {
+        r.textContent = '\u2717 错误！正确答案是：' + corName;
+        r.classList.add('error');
+        wroCnt++;
+    }
     document.getElementById('cc').textContent = corCnt;
     document.getElementById('wc').textContent = wroCnt;
     ansPref[qTarget.adcode] = { correct: cor };
     updProg(); render();
-
-    setTimeout(() => {
-        document.getElementById('quiz-area').classList.remove('active');
-        selFeat = null; qTarget = null; qAnswered = false;
-        if (Object.keys(ansPref).length === 34) {
-            document.getElementById('hint-t').innerHTML = '🎉 全部答完！点击已标注省份直达各省地图';
-        }
-        render();
-    }, 1500);
+    document.getElementById('btn-next').style.display = 'block';
+    loadWikiIntro(corName);
 }
 
 function updProg() {
@@ -357,7 +398,7 @@ function setMode(mode) {
 function resetAll() {
     ansPref = {}; corCnt = 0; wroCnt = 0;
     qTarget = null; qAnswered = false; selFeat = null;
-    document.getElementById('quiz-area').classList.remove('active');
+    document.getElementById('quiz-area').classList.remove('active');document.getElementById('quiz-intro').style.display='none';document.getElementById('btn-next').style.display='none';
     document.getElementById('cc').textContent = '0'; document.getElementById('wc').textContent = '0';
     document.getElementById('hint-t').innerHTML = '答题模式：点击省份猜名称<br>浏览模式：点击省份直达该省地图';
     updProg(); render();
@@ -365,6 +406,54 @@ function resetAll() {
 
 function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } }
 function shuffleArr(arr) { shuffle(arr); return arr; }
+
+
+async function loadWikiIntro(name) {
+    const intro = document.getElementById('quiz-intro');
+    intro.innerHTML = '<strong>' + name + '</strong><br>正在加载介绍...';
+    intro.style.display = 'block';
+    try {
+        const searchUrl = 'https://baike.baidu.com/api/search?word=' + encodeURIComponent(name);
+        const ctrl1 = new AbortController();
+        const t1 = setTimeout(() => ctrl1.abort(), 5000);
+        const sResp = await fetch(searchUrl, { signal: ctrl1.signal });
+        clearTimeout(t1);
+        if (!sResp.ok) throw new Error('search fail');
+        const sData = await sResp.json();
+        let lemmaId = null;
+        if (sData && sData.data && sData.data.length > 0) {
+            lemmaId = sData.data[0].lemma_id;
+        }
+        if (!lemmaId) throw new Error('no lemma');
+        const lemmaUrl = 'https://baike.baidu.com/api/lemma?lemma_id=' + lemmaId;
+        const ctrl2 = new AbortController();
+        const t2 = setTimeout(() => ctrl2.abort(), 5000);
+        const lResp = await fetch(lemmaUrl, { signal: ctrl2.signal });
+        clearTimeout(t2);
+        if (!lResp.ok) throw new Error('lemma fail');
+        const lData = await lResp.json();
+        let summary = '';
+        if (lData && lData.summary) {
+            summary = lData.summary;
+        }
+        if (!summary) throw new Error('no summary');
+        summary = summary.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim();
+        if (summary.length > 150) {
+            summary = summary.substring(0, 150) + '...';
+        }
+        intro.innerHTML = '<strong>' + name + '</strong><br>' + summary + '<br><span style="color:var(--text3);font-size:11px;">——百度百科</span> <a href="https://baike.baidu.com/item/' + encodeURIComponent(name) + '" target="_blank" rel="noopener" style="color:#007AFF;font-size:11px;">查看完整百科</a>';
+    } catch (e) {
+        intro.innerHTML = '<strong>' + name + '</strong><br>请联网后查看详细介绍';
+    }
+}
+
+function nextQuiz() {
+    document.getElementById('quiz-area').classList.remove('active');
+    document.getElementById('quiz-intro').style.display = 'none';
+    document.getElementById('btn-next').style.display = 'none';
+    selFeat = null; qTarget = null; qAnswered = false;
+    render();
+}
 </script>
 </body>
 </html>

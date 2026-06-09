@@ -6,55 +6,88 @@
 <title>湖南省互动地图</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background: #1a1a2e; color: #eee; display: flex; height: 100vh; overflow: hidden; user-select: none; }
+:root { --bg: #f2f2f7; --panel-bg: rgba(255,255,255,0.78); --panel-border: rgba(0,0,0,0.06); --text: #1d1d1f; --text2: #86868b; --text3: #aeaeb2; --card-bg: rgba(0,0,0,0.04); --card-border: rgba(0,0,0,0.06); --prog-track: rgba(0,0,0,0.06); --btn-bg: rgba(0,0,0,0.04); --btn-border: rgba(0,0,0,0.08); --btn-hover: rgba(0,0,0,0.08); --seg-bg: rgba(0,0,0,0.04); --seg-border: rgba(0,0,0,0.08); }
+[data-theme="dark"] { --bg: #000; --panel-bg: rgba(28,28,30,0.82); --panel-border: rgba(255,255,255,0.06); --text: #f5f5f7; --text2: #98989d; --text3: #8e8e93; --card-bg: rgba(255,255,255,0.05); --card-border: rgba(255,255,255,0.06); --prog-track: rgba(255,255,255,0.08); --btn-bg: rgba(255,255,255,0.04); --btn-border: rgba(255,255,255,0.08); --btn-hover: rgba(255,255,255,0.08); --seg-bg: rgba(255,255,255,0.03); --seg-border: rgba(255,255,255,0.08); }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; user-select: none; }
 #map-wrap { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
-canvas { display: block; cursor: pointer; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
-#panel { width: 360px; background: #16213e; display: flex; flex-direction: column; padding: 20px; gap: 14px; overflow-y: auto; border-left: 2px solid #0f3460; }
-h1 { font-size: 19px; text-align: center; color: #e94560; letter-spacing: 2px; }
-h2 { font-size: 13px; text-align: center; color: #888; font-weight: normal; }
-#prog-bar { background: #0f3460; border-radius: 10px; height: 10px; overflow: hidden; }
-#prog-fill { height: 100%; background: linear-gradient(90deg,#e94560,#f39c12,#2ecc71); transition: width 0.4s; width: 0%; }
-#prog-text { text-align: center; font-size: 13px; color: #aaa; }
-#quiz-area { background: #0f3460; border-radius: 12px; padding: 16px; display: none; flex-direction: column; gap: 10px; }
+canvas { display: block; cursor: pointer; border-radius: 16px; touch-action: manipulation; }
+#panel { width: 380px; background: var(--panel-bg); backdrop-filter: blur(50px) saturate(180%); -webkit-backdrop-filter: blur(50px) saturate(180%); display: flex; flex-direction: column; padding: 24px; gap: 14px; overflow-y: auto; border-left: 1px solid var(--panel-border); }
+h1 { font-size: 18px; text-align: center; color: var(--text); font-weight: 600; letter-spacing: 1px; }
+h2 { font-size: 12px; text-align: center; color: var(--text2); font-weight: 400; }
+#prog-bar { background: var(--prog-track); border-radius: 3px; height: 4px; overflow: hidden; }
+#prog-fill { height: 100%; background: linear-gradient(90deg, #FF453A, #FFD60A, #30D158); border-radius: 3px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+#prog-text { text-align: center; font-size: 12px; color: var(--text2); font-weight: 500; }
+#quiz-area { background: var(--card-bg); border-radius: 14px; padding: 16px; display: none; flex-direction: column; gap: 10px; border: 1px solid var(--card-border); }
 #quiz-area.active { display: flex; }
-#quiz-q { font-size: 15px; text-align: center; color: #f0c040; }
+#quiz-q { font-size: 14px; text-align: center; color: var(--text); font-weight: 500; }
 #quiz-ops { display: flex; flex-direction: column; gap: 8px; }
-.qbtn { padding: 11px 14px; border: 2px solid #1a3a6e; background: #16213e; color: #eee; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; text-align: center; }
-.qbtn:hover { border-color: #e94560; background: #1a2a4e; transform: translateX(4px); }
-.qbtn.correct { background: #27ae60; border-color: #2ecc71; }
-.qbtn.wrong { background: #c0392b; border-color: #e74c3c; }
-.qbtn:disabled { pointer-events: none; opacity: 0.7; }
-#result-t { text-align: center; font-size: 15px; min-height: 22px; color: #2ecc71; }
-#result-t.error { color: #e74c3c; }
-#hint { background: #0f3460; border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.6; color: #ccc; }
-#hint strong { color: #f0c040; }
-#hint-t { font-style: italic; color: #777; }
-.btn-row { display: flex; gap: 8px; }
-.btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.2s; }
-.btn-reset { background: #e94560; color: #fff; }
-.btn-reset:hover { background: #c0392b; }
-.btn-back { background: #2980b9; color: #fff; display: none; }
+.qbtn { padding: 12px 14px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all 0.2s ease; text-align: center; font-weight: 500; }
+.qbtn:hover { border-color: #007AFF; background: rgba(0,122,255,0.1); transform: scale(1.01); }
+.qbtn.correct { background: rgba(48,209,88,0.2); border-color: #30D158; color: #30D158; }
+.qbtn.wrong { background: rgba(255,69,58,0.2); border-color: #FF453A; color: #FF453A; }
+.qbtn:disabled { pointer-events: none; opacity: 0.5; }
+#result-t { text-align: center; font-size: 14px; min-height: 20px; color: #30D158; font-weight: 500; }
+#result-t.error { color: #FF453A; }
+#quiz-intro { display: none; font-size: 13px; line-height: 1.6; color: var(--text2); padding: 10px 0; border-top: 1px solid var(--card-border); margin-top: 2px; }
+#quiz-intro strong { color: var(--text); font-weight: 600; }
+#btn-next { width: 100%; padding: 10px 14px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; background: #007AFF; color: #fff; display: none; transition: all 0.2s ease; }
+#btn-next:hover { background: #0056CC; transform: scale(1.01); }
+
+#hint { background: var(--card-bg); border-radius: 14px; padding: 14px 16px; font-size: 12px; line-height: 1.7; color: var(--text2); border: 1px solid var(--card-border); }
+#hint strong { color: var(--text); font-weight: 600; }
+#hint-t { font-style: italic; color: var(--text3); }
+.btn-row { display: flex; gap: 10px; }
+.btn { flex: 1; padding: 10px 14px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s ease; }
+.btn-reset { background: rgba(255,69,58,0.12); color: #FF453A; }
+.btn-reset:hover { background: rgba(255,69,58,0.22); }
+.btn-back { background: rgba(0,122,255,0.12); color: #007AFF; display: none; }
 .btn-back.show { display: block; }
-.btn-back:hover { background: #1a5276; }
-.mode-row { display: flex; gap: 0; border-radius: 8px; overflow: hidden; border: 2px solid #0f3460; }
-.mode-btn { flex: 1; padding: 9px 0; border: none; cursor: pointer; font-size: 14px; font-weight: bold; background: #16213e; color: #666; transition: all 0.2s; }
-.mode-btn.active { background: #e94560; color: #fff; }
-.mode-btn:first-child { border-right: 1px solid #0f3460; }
-.mode-btn:hover:not(.active) { background: #1a2a4e; color: #aaa; }
-.legend { display: flex; gap: 16px; justify-content: center; font-size: 12px; }
-.leg-dot { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #555; display: inline-block; vertical-align: middle; margin-right: 4px; }
-#score { display: flex; justify-content: space-around; font-size: 14px; color: #aaa; }
-#score span { color: #f0c040; font-weight: bold; }
+.btn-back:hover { background: rgba(0,122,255,0.22); }
+.mode-row { display: flex; gap: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--seg-border); margin-bottom: 2px; }
+.mode-btn { flex: 1; padding: 8px 0; border: none; cursor: pointer; font-size: 13px; font-weight: 600; background: var(--seg-bg); color: var(--text2); transition: all 0.2s ease; }
+.mode-btn.active { background: #007AFF; color: #fff; }
+.mode-btn:first-child { border-right: 1px solid var(--seg-border); }
+.mode-btn:hover:not(.active) { background: var(--btn-hover); color: var(--text); }
+.theme-row { display: flex; gap: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--seg-border); }
+.theme-btn { flex: 1; padding: 6px 0; border: none; cursor: pointer; font-size: 12px; font-weight: 600; background: var(--seg-bg); color: var(--text2); transition: all 0.2s ease; }
+.theme-btn.active { background: #007AFF; color: #fff; }
+.theme-btn:first-child { border-right: 1px solid var(--seg-border); }
+.theme-btn:hover:not(.active) { background: var(--btn-hover); color: var(--text); }
+.legend { display: flex; gap: 14px; justify-content: center; font-size: 11px; color: var(--text2); }
+.leg-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; vertical-align: middle; margin-right: 4px; }
+#score { display: flex; justify-content: space-around; font-size: 13px; color: var(--text2); }
+#score span { color: var(--text); font-weight: 600; }
+
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+  #map-wrap { flex: none; width: 100%; height: 52vh; }
+  #panel { width: 100%; height: 48vh; padding: 12px 16px 28px 16px; gap: 8px; border-left: none; border-top: 1px solid var(--panel-border); border-radius: 16px 16px 0 0; }
+  h1 { font-size: 16px; }
+  h2 { font-size: 11px; }
+  .mode-btn { padding: 10px 0; font-size: 14px; }
+  .theme-btn { padding: 8px 0; font-size: 13px; }
+  .qbtn { padding: 14px 14px; font-size: 15px; }
+  .btn { padding: 12px 14px; font-size: 14px; }
+  #hint { font-size: 13px; padding: 12px 14px; }
+  #quiz-q { font-size: 15px; }
+  #prog-text { font-size: 13px; }
+  .legend { font-size: 12px; }
+}
+
 </style>
 </head>
-<body>
+<body data-theme="light">
 <div id="map-wrap"><canvas id="cv"></canvas></div>
 <div id="panel">
     <h1>湖南互动地图</h1>
-    <h2>点击区域 → 选择题 → 认识湖南</h2>
+    <h2>点击区域 · 选择题 · 认识湖南</h2>
     <div class="mode-row">
-        <button class="mode-btn active" id="mode-pref" onclick="setMode('prefecture')">🏙 地级</button>
-        <button class="mode-btn" id="mode-county" onclick="setMode('county')">🏘 区/县</button>
+        <button class="mode-btn active" id="mode-pref" onclick="setMode('prefecture')">地级</button>
+        <button class="mode-btn" id="mode-county" onclick="setMode('county')">区/县</button>
+    </div>
+    <div class="theme-row">
+        <button class="theme-btn active" id="theme-light" onclick="setTheme('light')">浅色</button>
+        <button class="theme-btn" id="theme-dark" onclick="setTheme('dark')">深色</button>
     </div>
     <div id="prog-bar"><div id="prog-fill"></div></div>
     <div id="prog-text">已答 0 / 14 地级</div>
@@ -63,16 +96,18 @@ h2 { font-size: 13px; text-align: center; color: #888; font-weight: normal; }
         <div id="quiz-q">这是哪个行政区？</div>
         <div id="quiz-ops"></div>
         <div id="result-t"></div>
+        <div id="quiz-intro"></div>
+        <button class="btn" id="btn-next" onclick="nextQuiz()">下一个</button>
     </div>
-    <div id="hint"><strong>💡 操作提示</strong><br><span id="hint-t">点击地图上任意区域开始答题</span></div>
+    <div id="hint"><strong>操作提示</strong><br><span id="hint-t">点击地图上任意区域开始答题</span></div>
     <div class="btn-row">
-        <button class="btn btn-back" id="btn-back" onclick="backToProvince()">🔙 返回省级</button>
-        <button class="btn btn-reset" onclick="resetAll()">🔄 重新开始</button>
+        <button class="btn btn-back" id="btn-back" onclick="backToProvince()">返回上级</button>
+        <button class="btn btn-reset" onclick="resetAll()">重新开始</button>
     </div>
     <div class="legend">
-        <span><span class="leg-dot" style="background:#1e3a5f;"></span>未答</span>
-        <span><span class="leg-dot" style="background:#27ae60;"></span>答对</span>
-        <span><span class="leg-dot" style="background:#c0392b;"></span>答错</span>
+        <span><span class="leg-dot" id="leg-unans" style="background:#d5d5dc;"></span>未答</span>
+        <span><span class="leg-dot" style="background:#30D158;"></span>答对</span>
+        <span><span class="leg-dot" style="background:#FF453A;"></span>答错</span>
     </div>
 </div>
 <script src="gd_data.js"></script>
@@ -81,6 +116,9 @@ h2 { font-size: 13px; text-align: center; color: #888; font-weight: normal; }
 const DEF={lonMin:108.46,lonMax:114.59,latMin:24.31,latMax:30.46,scale:127};
 let PRJ={...DEF};
 let W=Math.round((DEF.lonMax-DEF.lonMin)*DEF.scale),H=Math.round((DEF.latMax-DEF.latMin)*DEF.scale),cv,ctx;
+const TC={light:{bg:'#e8e8ed',ov:'rgba(255,255,255,0.5)',fl:'#d5d5dc',flC:'#c8c8d0',st:'#c0c0c6',stC:'#b0b0b8',cf:'rgba(48,209,88,0.25)',wf:'rgba(255,69,58,0.25)',cfC:'rgba(48,209,88,0.3)',wfC:'rgba(255,69,58,0.3)',lb:'#1d1d1f',tc:'rgba(0,0,0,0.25)'},dark:{bg:'#000',ov:'rgba(255,255,255,0.02)',fl:'#1c1c24',flC:'#262632',st:'#3a3a44',stC:'#4a4a55',cf:'rgba(48,209,88,0.3)',wf:'rgba(255,69,58,0.3)',cfC:'rgba(48,209,88,0.35)',wfC:'rgba(255,69,58,0.35)',lb:'#f5f5f7',tc:'rgba(255,255,255,0.4)'}};
+let theme='light';
+function setTheme(t){theme=t;document.body.setAttribute('data-theme',t);document.getElementById('theme-light').classList.toggle('active',t==='light');document.getElementById('theme-dark').classList.toggle('active',t==='dark');document.getElementById('leg-unans').style.background=TC[t].fl;render();}
 function proj(lon,lat){return[(lon-PRJ.lonMin)*PRJ.scale,(PRJ.latMax-lat)*PRJ.scale];}
 function fitBoundsFeat(feat){const g=feat.geometry,ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];let mnL=Infinity,mxL=-Infinity,mnA=Infinity,mxA=-Infinity;for(const p of ps)for(const t of(p[0]||[])){if(t[0]<mnL)mnL=t[0];if(t[0]>mxL)mxL=t[0];if(t[1]<mnA)mnA=t[1];if(t[1]>mxA)mxA=t[1];}const pL=(mxL-mnL)*0.12,pA=(mxA-mnA)*0.12;PRJ.lonMin=mnL-pL;PRJ.lonMax=mxL+pL;PRJ.latMin=mnA-pA;PRJ.latMax=mxA+pA;PRJ.scale=780/(PRJ.lonMax-PRJ.lonMin);W=Math.round((PRJ.lonMax-PRJ.lonMin)*PRJ.scale);H=Math.round((PRJ.latMax-PRJ.latMin)*PRJ.scale);cv.width=W;cv.height=H;resizeCvStyle();}
 function resetProjection(){PRJ={...DEF};W=Math.round((DEF.lonMax-DEF.lonMin)*DEF.scale);H=Math.round((DEF.latMax-DEF.latMin)*DEF.scale);cv.width=W;cv.height=H;resizeCvStyle();}
@@ -88,35 +126,83 @@ let view='province',activeId=null,activeName='',ansPref={},ansCounty={},qTarget=
 window.onload=()=>{cv=document.getElementById('cv');ctx=cv.getContext('2d');cv.width=W;cv.height=H;resizeCvStyle();window.addEventListener('resize',resizeCvStyle);cv.addEventListener('click',onClick);cv.addEventListener('mousemove',onMove);updProg();render();};
 function resizeCvStyle(){const ct=document.getElementById('map-wrap');const s=Math.min((ct.clientWidth-20)/W,(ct.clientHeight-20)/H);cv.style.width=(W*s)+'px';cv.style.height=(H*s)+'px';if(ctx)render();}
 function drawFeature(feat,sc,fc,lw){const g=feat.geometry;if(g.type==='MultiPolygon'){for(const p of g.coordinates)drawRingGroup(p,sc,fc,lw);}else if(g.type==='Polygon'){drawRingGroup(g.coordinates,sc,fc,lw);}}
-function drawRingGroup(rings,sc,fc,lw){if(!rings||rings.length===0)return;ctx.beginPath();for(let r=0;r<rings.length;r++){const ring=rings[r];if(ring.length<3)continue;const[x0,y0]=proj(ring[0][0],ring[0][1]);ctx.moveTo(x0,y0);for(let i=1;i<ring.length;i++){const[px,py]=proj(ring[i][0],ring[i][1]);ctx.lineTo(px,py);}ctx.closePath();}if(fc){ctx.fillStyle=fc;ctx.fill('evenodd');}if(sc){ctx.strokeStyle=sc;ctx.lineWidth=lw||1;ctx.stroke();}}
-function drawLabel(cx,cy,text,color,fs){ctx.fillStyle=color||'#eee';ctx.font='bold '+(fs||12)+'px "Microsoft YaHei"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.strokeStyle='rgba(0,0,0,0.65)';ctx.lineWidth=3;ctx.strokeText(text,cx,cy);ctx.fillText(text,cx,cy);}
+function drawRingGroup(rings,sc,fc,lw){if(!rings||rings.length===0)return;ctx.beginPath();for(let r=0;r<rings.length;r++){const ring=rings[r];if(ring.length<3)continue;const[x0,y0]=proj(ring[0][0],ring[0][1]);ctx.moveTo(x0,y0);for(let i=1;i<ring.length;i++){const[px,py]=proj(ring[i][0],ring[i][1]);ctx.lineTo(px,py);}ctx.closePath();}if(fc){ctx.fillStyle=fc;ctx.fill('evenodd');}if(sc){ctx.strokeStyle=sc;ctx.lineWidth=lw||0.8;ctx.stroke();}}
+function drawLabel(cx,cy,text,color,fs){ctx.fillStyle=color||TC[theme].lb;ctx.font=(fs||12)+'px -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.strokeStyle='rgba(0,0,0,0.6)';ctx.lineWidth=2.5;ctx.strokeText(text,cx,cy);ctx.fillText(text,cx,cy);}
 function getBestRing(feat){const g=feat.geometry,ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];let best=null,bestLen=0;for(const p of ps){if(p.length>0&&p[0].length>bestLen){best=p[0];bestLen=p[0].length;}}return best;}
 function getAllRings(feat){const g=feat.geometry,ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];const rings=[];for(const p of ps)for(const r of p)rings.push(r);return rings;}
 function distToNearestEdge(px,py,rings){let minD=Infinity;for(const ring of rings){for(let i=0;i<ring.length-1;i++){const[x1,y1]=proj(ring[i][0],ring[i][1]);const[x2,y2]=proj(ring[i+1][0],ring[i+1][1]);const dx=x2-x1,dy=y2-y1,len2=dx*dx+dy*dy;if(len2===0)continue;let t=((px-x1)*dx+(py-y1)*dy)/len2;t=Math.max(0,Math.min(1,t));const cx=x1+t*dx,cy=y1+t*dy;const d=Math.sqrt((px-cx)*(px-cx)+(py-cy)*(py-cy));if(d<minD)minD=d;}}return minD;}
 function getCentroid(feat){const mr=getBestRing(feat),ar=getAllRings(feat),cands=[];if(mr&&mr.length>0){let cx=0,cy=0;for(const pt of mr){cx+=pt[0];cy+=pt[1];}cx/=mr.length;cy/=mr.length;cands.push(proj(cx,cy));}const p=feat.properties;if(p.centroid)cands.push(proj(p.centroid[0],p.centroid[1]));if(p.center)cands.push(proj(p.center[0],p.center[1]));let best=cands[0]||[W/2,H/2],bestDist=-1;for(const c of cands){if(!c)continue;const d=distToNearestEdge(c[0],c[1],ar);if(d>bestDist){bestDist=d;best=c;}}return best;}
-function renderProvince(){ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(20,50,90,0.6)';ctx.fillRect(0,0,W,H);if(!GD_PREFECTURES||!GD_PREFECTURES.features)return;GD_PREFECTURES.features.forEach(f=>{const id=f.properties.adcode,ans=ansPref[id];let fc='#162447';if(ans)fc=ans.correct?'rgba(39,174,96,0.45)':'rgba(192,57,43,0.45)';drawFeature(f,'#3a5f8a',fc,1.2);if(ans){const[cx,cy]=getCentroid(f);drawLabel(cx,cy,f.properties.name,ans.correct?'#2ecc71':'#e74c3c',12);}});const cap=GD_PREFECTURES.features.find(f=>f.properties.adcode===430100);if(cap){const[cx,cy]=getCentroid(cap);drawLabel(cx,cy-14,'★','#f0c040',18);}if(selFeat){ctx.save();ctx.shadowColor='#f0c040';ctx.shadowBlur=14;drawFeature(selFeat,'#f0c040','rgba(240,192,64,0.08)',3);ctx.restore();}}
-function renderCounty(){ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);if(countyFeatures.length>0){countyFeatures.forEach((f,i)=>{const ans=ansCounty[activeId]&&ansCounty[activeId][i];let fc='#1e3a5f';if(ans!==undefined)fc=ans?'rgba(39,174,96,0.5)':'rgba(192,57,43,0.5)';drawFeature(f,'#4466aa',fc,1.4);if(ans!==undefined){const[cx,cy]=getCentroid(f);drawLabel(cx,cy,f.properties.name,ans?'#2ecc71':'#e74c3c',12);}});}if(selFeat){ctx.save();ctx.shadowColor='#f0c040';ctx.shadowBlur=14;drawFeature(selFeat,'#f0c040','rgba(240,192,64,0.1)',3);ctx.restore();}}
+function renderProvince(){const c=TC[theme];ctx.fillStyle=c.bg;ctx.fillRect(0,0,W,H);ctx.fillStyle=c.ov;ctx.fillRect(0,0,W,H);if(!GD_PREFECTURES||!GD_PREFECTURES.features)return;GD_PREFECTURES.features.forEach(f=>{const id=f.properties.adcode,ans=ansPref[id];let fc=c.fl;if(ans)fc=ans.correct?c.cf:c.wf;drawFeature(f,c.st,fc,1);if(ans){const[cx,cy]=getCentroid(f);drawLabel(cx,cy,f.properties.name,ans.correct?'#30D158':'#FF453A',11);}});const cap=GD_PREFECTURES.features.find(f=>f.properties.adcode===430100);if(cap){const[cx,cy]=getCentroid(cap);drawLabel(cx,cy-13,'★','#FFD60A',16);}if(selFeat){ctx.save();ctx.shadowColor='#007AFF';ctx.shadowBlur=16;drawFeature(selFeat,'#007AFF','rgba(0,122,255,0.06)',3);ctx.restore();}}
+function renderCounty(){const c=TC[theme];ctx.fillStyle=c.bg;ctx.fillRect(0,0,W,H);if(countyFeatures.length>0){countyFeatures.forEach((f,i)=>{const ans=ansCounty[activeId]&&ansCounty[activeId][i];let fc=c.flC;if(ans!==undefined)fc=ans?c.cfC:c.wfC;drawFeature(f,c.stC,fc,1.2);if(ans!==undefined){const[cx,cy]=getCentroid(f);drawLabel(cx,cy,f.properties.name,ans?'#30D158':'#FF453A',11);}});}if(selFeat){ctx.save();ctx.shadowColor='#007AFF';ctx.shadowBlur=16;drawFeature(selFeat,'#007AFF','rgba(0,122,255,0.08)',3);ctx.restore();}}
 function render(){if(view==='province')renderProvince();else renderCounty();drawTitle();}
-function drawTitle(){ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='16px "Microsoft YaHei"';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(view==='province'?'湖南 · 地级':'湖南 · '+activeName+' · 县级',W-12,H-10);}
+function drawTitle(){ctx.fillStyle=TC[theme].tc;ctx.font='14px -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(view==='province'?'湖南 · 地级':'湖南 · '+activeName+' · 县级',W-12,H-10);}
 function ptInRing(px,py,ring){let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const[xi,yi]=proj(ring[i][0],ring[i][1]);const[xj,yj]=proj(ring[j][0],ring[j][1]);if((yi>py)!==(yj>py)&&px<(xj-xi)*(py-yi)/(yj-yi)+xi)inside=!inside;}return inside;}
 function ptInFeature(px,py,feat){const g=feat.geometry,ps=g.type==='MultiPolygon'?g.coordinates:[g.coordinates];for(const poly of ps){if(poly.length>0&&ptInRing(px,py,poly[0])){let inHole=false;for(let i=1;i<poly.length;i++){if(ptInRing(px,py,poly[i])){inHole=true;break;}}if(!inHole)return true;}}return false;}
 function findPrefFeature(mx,my){if(!GD_PREFECTURES||!GD_PREFECTURES.features)return null;for(const f of GD_PREFECTURES.features){if(ptInFeature(mx,my,f))return f;}return null;}
 function findCountyFeature(mx,my){for(let i=0;i<countyFeatures.length;i++){if(ptInFeature(mx,my,countyFeatures[i]))return{feat:countyFeatures[i],idx:i};}return null;}
 let hoverPrefId=null,hoverCountyIdx=-1,hoverRAF=false;
-function onMove(e){if(hoverRAF)return;hoverRAF=true;requestAnimationFrame(()=>{hoverRAF=false;const rect=cv.getBoundingClientRect(),sx=W/rect.width,sy=H/rect.height,mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sy;if(view==='province'){const f=findPrefFeature(mx,my),nid=f?f.properties.adcode:null;if(nid!==hoverPrefId){hoverPrefId=nid;render();if(f){drawFeature(f,'#f0c040','rgba(240,192,64,0.12)',2.2);drawTitle();}}}else if(view==='county'&&countyFeatures.length>0){const c=findCountyFeature(mx,my),nidx=c?c.idx:-1;if(nidx!==hoverCountyIdx){hoverCountyIdx=nidx;render();if(c){drawFeature(c.feat,'#f0c040','rgba(240,192,64,0.18)',2);drawTitle();}}}});}
-function onClick(e){if(document.getElementById('quiz-area').classList.contains('active'))return;const rect=cv.getBoundingClientRect(),sx=W/rect.width,sy=H/rect.height,mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sy;if(view==='province'){const f=findPrefFeature(mx,my);if(!f)return;const id=f.properties.adcode;if(quizMode==='county'){switchToCounty(id,f.properties.name);}else if(ansPref[id]){switchToCounty(id,f.properties.name);}else{startPrefQuiz(f);}}else if(view==='county'){if(countyFeatures.length===0){backToProvince();return;}const c=findCountyFeature(mx,my);if(!c){backToProvince();return;}if(ansCounty[activeId]&&ansCounty[activeId][c.idx]!==undefined)return;startCountyQuiz(c.feat,c.idx);}}
+function onMove(e){if(hoverRAF)return;hoverRAF=true;requestAnimationFrame(()=>{hoverRAF=false;const rect=cv.getBoundingClientRect(),sx=W/rect.width,sy=H/rect.height,mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sy;if(view==='province'){const f=findPrefFeature(mx,my),nid=f?f.properties.adcode:null;if(nid!==hoverPrefId){hoverPrefId=nid;render();if(f){drawFeature(f,'#007AFF','rgba(0,122,255,0.08)',2);drawTitle();}}}else if(view==='county'&&countyFeatures.length>0){const c=findCountyFeature(mx,my),nidx=c?c.idx:-1;if(nidx!==hoverCountyIdx){hoverCountyIdx=nidx;render();if(c){drawFeature(c.feat,'#007AFF','rgba(0,122,255,0.14)',2);drawTitle();}}}});}
+function onClick(e){if(document.getElementById('quiz-area').classList.contains('active')){document.getElementById('quiz-area').classList.remove('active');document.getElementById('quiz-intro').style.display='none';document.getElementById('btn-next').style.display='none';selFeat=null;qTarget=null;qAnswered=false;}const rect=cv.getBoundingClientRect(),sx=W/rect.width,sy=H/rect.height,mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sy;if(view==='province'){const f=findPrefFeature(mx,my);if(!f)return;const id=f.properties.adcode;if(quizMode==='county'){switchToCounty(id,f.properties.name);}else if(ansPref[id]){switchToCounty(id,f.properties.name);}else{startPrefQuiz(f);}}else if(view==='county'){if(countyFeatures.length===0){backToProvince();return;}const c=findCountyFeature(mx,my);if(!c){backToProvince();return;}if(ansCounty[activeId]&&ansCounty[activeId][c.idx]!==undefined)return;startCountyQuiz(c.feat,c.idx);}}
 function startPrefQuiz(feat){qTarget={type:'prefecture',adcode:feat.properties.adcode};qAnswered=false;selFeat=feat;render();const allNames=GD_PREFECTURES.features.map(f=>f.properties.name),cor=feat.properties.name,w=allNames.filter(n=>n!==cor);shuffle(w);const ops=shuffleArr([cor,...w.slice(0,3)]);corIdx=ops.indexOf(cor);showQuiz('这是哪个地级行政区？',ops);}
 function startCountyQuiz(feat,idx){qTarget={type:'county',adcode:activeId,idx:idx};qAnswered=false;selFeat=feat;render();const allNames=countyFeatures.map(f=>f.properties.name),cor=feat.properties.name;let w=allNames.filter(n=>n!==cor);shuffle(w);if(w.length<3){const extra=GD_PREFECTURES.features.map(f=>f.properties.name).filter(n=>n!==activeName&&!w.includes(n));shuffle(extra);w=w.concat(extra.slice(0,3-w.length));}const ops=shuffleArr([cor,...w.slice(0,3)]);corIdx=ops.indexOf(cor);showQuiz('这是哪个县级行政区？',ops);}
 function showQuiz(q,ops){const a=document.getElementById('quiz-area');a.classList.add('active');document.getElementById('quiz-q').textContent=q;document.getElementById('result-t').textContent='';document.getElementById('result-t').classList.remove('error');const c=document.getElementById('quiz-ops');c.innerHTML='';ops.forEach((o,i)=>{const b=document.createElement('button');b.className='qbtn';b.textContent=o;b.onclick=()=>selOpt(i);c.appendChild(b);});}
-function selOpt(i){if(qAnswered)return;qAnswered=true;const cor=(i===corIdx);document.querySelectorAll('.qbtn').forEach((b,j)=>{b.disabled=true;if(j===corIdx)b.classList.add('correct');if(j===i&&!cor)b.classList.add('wrong');});const r=document.getElementById('result-t');if(cor){r.textContent='✅ 答对了！';r.classList.remove('error');corCnt++;}else{r.textContent='❌ 答错了';r.classList.add('error');wroCnt++;}document.getElementById('cc').textContent=corCnt;document.getElementById('wc').textContent=wroCnt;if(qTarget.type==='prefecture'){ansPref[qTarget.adcode]={correct:cor};}else{if(!ansCounty[qTarget.adcode])ansCounty[qTarget.adcode]={};ansCounty[qTarget.adcode][qTarget.idx]=cor;}updProg();render();setTimeout(()=>{document.getElementById('quiz-area').classList.remove('active');selFeat=null;qTarget=null;qAnswered=false;if(view==='province'&&Object.keys(ansPref).length===14)document.getElementById('hint-t').innerHTML='🎉 全部答完！点击任意区域进入县级答题';render();},1500);}
+function selOpt(i){if(qAnswered)return;qAnswered=true;const cor=(i===corIdx);const allBtns=document.querySelectorAll('.qbtn');allBtns.forEach((b,j)=>{b.disabled=true;if(j===corIdx)b.classList.add('correct');if(j===i&&!cor)b.classList.add('wrong');});const r=document.getElementById('result-t');const corName=allBtns[corIdx].textContent;if(cor){r.textContent='\u2713 正确！';r.classList.remove('error');corCnt++;}else{r.textContent='\u2717 错误！正确答案是：'+corName;r.classList.add('error');wroCnt++;}document.getElementById('cc').textContent=corCnt;document.getElementById('wc').textContent=wroCnt;if(qTarget.type==='prefecture'){ansPref[qTarget.adcode]={correct:cor};}else{if(!ansCounty[qTarget.adcode])ansCounty[qTarget.adcode]={};ansCounty[qTarget.adcode][qTarget.idx]=cor;}updProg();render();document.getElementById('btn-next').style.display='block';
+loadWikiIntro(corName);}
 async function switchToCounty(adcode,name){document.getElementById('quiz-area').classList.remove('active');qTarget=null;qAnswered=false;selFeat=null;activeId=adcode;activeName=name;countyFeatures=[];hoverCountyIdx=-1;view='county';document.getElementById('btn-back').classList.add('show');const cd=GD_COUNTIES[String(adcode)];if(cd&&cd.features)countyFeatures=cd.features;const total=countyFeatures.length,prefFeat=GD_PREFECTURES.features.find(f=>f.properties.adcode===adcode);if(prefFeat)fitBoundsFeat(prefFeat);document.getElementById('hint-t').innerHTML=total>0?'当前：<strong>'+name+'</strong><br>共 '+total+' 个县级 · 点击答题，空白返回':'当前：<strong>'+name+'</strong><br>无下级划分 · 点击返回省级';updProg();render();}
-function backToProvince(){document.getElementById('quiz-area').classList.remove('active');qTarget=null;qAnswered=false;selFeat=null;activeId=null;activeName='';countyFeatures=[];hoverPrefId=null;hoverCountyIdx=-1;view='province';resetProjection();document.getElementById('btn-back').classList.remove('show');document.getElementById('hint-t').innerHTML=quizMode==='county'?'<strong>区/县模式</strong><br>点击地级行政区直接进入县级':'<strong>地级模式</strong><br>先答地级名称，再进入区/县';updProg();render();}
+function backToProvince(){document.getElementById('quiz-area').classList.remove('active');qTarget=null;qAnswered=false;selFeat=null;activeId=null;activeName='';countyFeatures=[];hoverPrefId=null;hoverCountyIdx=-1;view='province';resetProjection();document.getElementById('btn-back').classList.remove('show');document.getElementById('hint-t').innerHTML=quizMode==='county'?'区/县模式<br>点击地级行政区直接进入县级':'地级模式<br>先答地级名称，再进入区/县';updProg();render();}
 function updProg(){const ap=Object.keys(ansPref).length;let tc=0,ac=0;if(view==='county'&&activeId){tc=countyFeatures.length;ac=Object.keys(ansCounty[activeId]||{}).length;}document.getElementById('prog-text').textContent=view==='province'?'已答 '+ap+' / 14 地级':'已答 '+ac+' / '+tc+' 县级';document.getElementById('prog-fill').style.width=(view==='province'?(ap/14*100):(tc>0?ac/tc*100:0))+'%';}
-function setMode(mode){quizMode=mode;document.getElementById('mode-pref').classList.toggle('active',mode==='prefecture');document.getElementById('mode-county').classList.toggle('active',mode==='county');if(view==='county')backToProvince();document.getElementById('hint-t').innerHTML=mode==='county'?'<strong>区/县模式</strong><br>点击地级行政区直接进入县级':'<strong>地级模式</strong><br>先答地级名称，再进入区/县';updProg();}
-function resetAll(){ansPref={};ansCounty={};corCnt=0;wroCnt=0;countyFeatures=[];view='province';activeId=null;activeName='';qTarget=null;qAnswered=false;selFeat=null;resetProjection();document.getElementById('quiz-area').classList.remove('active');document.getElementById('btn-back').classList.remove('show');document.getElementById('cc').textContent='0';document.getElementById('wc').textContent='0';document.getElementById('hint-t').innerHTML='点击地图上任意区域开始答题';updProg();render();}
+function setMode(mode){quizMode=mode;document.getElementById('mode-pref').classList.toggle('active',mode==='prefecture');document.getElementById('mode-county').classList.toggle('active',mode==='county');if(view==='county')backToProvince();document.getElementById('hint-t').innerHTML=mode==='county'?'区/县模式<br>点击地级行政区直接进入县级':'地级模式<br>先答地级名称，再进入区/县';updProg();}
+function resetAll(){ansPref={};ansCounty={};corCnt=0;wroCnt=0;countyFeatures=[];view='province';activeId=null;activeName='';qTarget=null;qAnswered=false;selFeat=null;resetProjection();document.getElementById('quiz-area').classList.remove('active');document.getElementById('quiz-intro').style.display='none';document.getElementById('btn-next').style.display='none';document.getElementById('btn-back').classList.remove('show');document.getElementById('cc').textContent='0';document.getElementById('wc').textContent='0';document.getElementById('hint-t').innerHTML='点击地图上任意区域开始答题';updProg();render();}
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}
 function shuffleArr(arr){shuffle(arr);return arr;}
 document.addEventListener('keydown',(e)=>{if(e.key==='Escape'&&view==='county')backToProvince();if(e.key==='r'&&e.ctrlKey){e.preventDefault();resetAll();}});
+
+async function loadWikiIntro(name) {
+    const intro = document.getElementById('quiz-intro');
+    intro.innerHTML = '<strong>' + name + '</strong><br>正在加载介绍...';
+    intro.style.display = 'block';
+    try {
+        const searchUrl = 'https://baike.baidu.com/api/search?word=' + encodeURIComponent(name);
+        const ctrl1 = new AbortController();
+        const t1 = setTimeout(() => ctrl1.abort(), 5000);
+        const sResp = await fetch(searchUrl, { signal: ctrl1.signal });
+        clearTimeout(t1);
+        if (!sResp.ok) throw new Error('search fail');
+        const sData = await sResp.json();
+        let lemmaId = null;
+        if (sData && sData.data && sData.data.length > 0) {
+            lemmaId = sData.data[0].lemma_id;
+        }
+        if (!lemmaId) throw new Error('no lemma');
+        const lemmaUrl = 'https://baike.baidu.com/api/lemma?lemma_id=' + lemmaId;
+        const ctrl2 = new AbortController();
+        const t2 = setTimeout(() => ctrl2.abort(), 5000);
+        const lResp = await fetch(lemmaUrl, { signal: ctrl2.signal });
+        clearTimeout(t2);
+        if (!lResp.ok) throw new Error('lemma fail');
+        const lData = await lResp.json();
+        let summary = '';
+        if (lData && lData.summary) {
+            summary = lData.summary;
+        }
+        if (!summary) throw new Error('no summary');
+        summary = summary.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim();
+        if (summary.length > 150) {
+            summary = summary.substring(0, 150) + '...';
+        }
+        intro.innerHTML = '<strong>' + name + '</strong><br>' + summary + '<br><span style="color:var(--text3);font-size:11px;">——百度百科</span> <a href="https://baike.baidu.com/item/' + encodeURIComponent(name) + '" target="_blank" rel="noopener" style="color:#007AFF;font-size:11px;">查看完整百科</a>';
+    } catch (e) {
+        intro.innerHTML = '<strong>' + name + '</strong><br>请联网后查看详细介绍';
+    }
+}
+
+function nextQuiz() {
+    document.getElementById('quiz-area').classList.remove('active');
+    document.getElementById('quiz-intro').style.display = 'none';
+    document.getElementById('btn-next').style.display = 'none';
+    selFeat = null; qTarget = null; qAnswered = false;
+    render();
+}
 </script>
 </body>
 </html>
