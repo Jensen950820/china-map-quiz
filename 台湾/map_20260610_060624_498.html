@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台湾省互动地图</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #f2f2f7; --text: #1d1d1f; --text2: #86868b; }
+[data-theme="dark"] { --bg: #000; --text: #f5f5f7; --text2: #98989d; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    user-select: none;
+    transition: background 0.4s ease, color 0.4s ease;
+}
+.container {
+    text-align: center;
+    padding: 40px;
+}
+h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+}
+p {
+    font-size: 18px;
+    color: var(--text2);
+    font-weight: 400;
+    line-height: 1.6;
+}
+.theme-toggle {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    border: 1px solid rgba(0,0,0,0.12);
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.theme-toggle:hover {
+    transform: scale(1.05);
+}
+.divider {
+    width: 40px;
+    height: 2px;
+    background: var(--text2);
+    opacity: 0.3;
+    margin: 24px auto;
+    border-radius: 1px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>台湾省</h1>
+    <div class="divider"></div>
+    <p>Coming Soon</p>
+    <p style="font-size:14px;margin-top:8px;">精彩内容即将上线，敬请期待</p>
+</div>
+<button class="theme-toggle" onclick="toggleTheme()" title="切换主题">☀️</button>
+<script>
+(function() {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.body.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+})();
+function toggleTheme() {
+    const body = document.body;
+    const isDark = body.getAttribute('data-theme') === 'dark';
+    body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
+}
+</script>
+</body>
+</html>
