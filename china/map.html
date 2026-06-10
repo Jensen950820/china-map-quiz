@@ -26,6 +26,8 @@ h2 { font-size: 12px; text-align: center; color: var(--text2); font-weight: 400;
 .qbtn.correct { background: rgba(48,209,88,0.2); border-color: #30D158; color: #30D158; }
 .qbtn.wrong { background: rgba(255,69,58,0.2); border-color: #FF453A; color: #FF453A; }
 .qbtn:disabled { pointer-events: none; opacity: 0.5; }
+.ref-btn { display: inline-block; padding: 5px 12px; margin: 3px 6px 3px 0; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s ease; text-decoration: none; }
+.ref-btn:hover { border-color: #007AFF; background: rgba(0,122,255,0.1); }
 #result-t { text-align: center; font-size: 14px; min-height: 20px; color: #30D158; font-weight: 500; }
 #result-t.error { color: #FF453A; }
 #quiz-intro { display: none; font-size: 13px; line-height: 1.6; color: var(--text2); padding: 10px 0; border-top: 1px solid var(--card-border); margin-top: 2px; }
@@ -348,6 +350,7 @@ function showQuiz(q, ops) {
     document.getElementById('result-t').classList.remove('error');
     const c = document.getElementById('quiz-ops'); c.innerHTML = '';
     ops.forEach((o, i) => { const b = document.createElement('button'); b.className = 'qbtn'; b.textContent = o; b.onclick = () => selOpt(i); c.appendChild(b); });
+    if (window.innerWidth <= 768) { setTimeout(() => { a.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); }
 }
 
 function selOpt(i) {
@@ -408,42 +411,39 @@ function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Mat
 function shuffleArr(arr) { shuffle(arr); return arr; }
 
 
-async function loadWikiIntro(name) {
+function loadWikiIntro(name) {
     const intro = document.getElementById('quiz-intro');
-    intro.innerHTML = '<strong>' + name + '</strong><br>正在加载介绍...';
     intro.style.display = 'block';
-    try {
-        const searchUrl = 'https://baike.baidu.com/api/search?word=' + encodeURIComponent(name);
-        const ctrl1 = new AbortController();
-        const t1 = setTimeout(() => ctrl1.abort(), 5000);
-        const sResp = await fetch(searchUrl, { signal: ctrl1.signal });
-        clearTimeout(t1);
-        if (!sResp.ok) throw new Error('search fail');
-        const sData = await sResp.json();
-        let lemmaId = null;
-        if (sData && sData.data && sData.data.length > 0) {
-            lemmaId = sData.data[0].lemma_id;
+    const feat = GD_PREFECTURES.features.find(f => f.properties.name === name);
+    if (feat && feat.properties.desc) {
+        var desc = feat.properties.desc;
+        var refIdx = desc.indexOf('\n参考链接：');
+        if (refIdx !== -1) {
+            var mainDesc = desc.substring(0, refIdx);
+            mainDesc = mainDesc.replace(/\n/g, '<br>');
+            var refPart = desc.substring(refIdx + 1);
+            var refLines = refPart.split('\n');
+            var buttons = [];
+            for (var i = 0; i < refLines.length; i++) {
+                var line = refLines[i].trim();
+                if (line.startsWith('参考链接：')) continue;
+                var m = line.match(/^(.+?)：\s*(https?:\/\/\S+)/);
+                if (m) {
+                    buttons.push('<button class="ref-btn" onclick="window.open(\'' + m[2] + '\', \'_blank\')">' + m[1] + '</button>');
+                }
+            }
+            if (buttons.length > 0) {
+                intro.innerHTML = '<strong>' + name + '</strong><br>' + mainDesc + '<br><strong>参考链接</strong><br>' + buttons.join(' ');
+            } else {
+                intro.innerHTML = '<strong>' + name + '</strong><br>' + mainDesc;
+            }
+        } else {
+            desc = desc.replace(/\n/g, '<br>');
+            desc = desc.replace(/(https?:\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank">$1</a>');
+            intro.innerHTML = '<strong>' + name + '</strong><br>' + desc;
         }
-        if (!lemmaId) throw new Error('no lemma');
-        const lemmaUrl = 'https://baike.baidu.com/api/lemma?lemma_id=' + lemmaId;
-        const ctrl2 = new AbortController();
-        const t2 = setTimeout(() => ctrl2.abort(), 5000);
-        const lResp = await fetch(lemmaUrl, { signal: ctrl2.signal });
-        clearTimeout(t2);
-        if (!lResp.ok) throw new Error('lemma fail');
-        const lData = await lResp.json();
-        let summary = '';
-        if (lData && lData.summary) {
-            summary = lData.summary;
-        }
-        if (!summary) throw new Error('no summary');
-        summary = summary.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim();
-        if (summary.length > 150) {
-            summary = summary.substring(0, 150) + '...';
-        }
-        intro.innerHTML = '<strong>' + name + '</strong><br>' + summary + '<br><span style="color:var(--text3);font-size:11px;">——百度百科</span> <a href="https://baike.baidu.com/item/' + encodeURIComponent(name) + '" target="_blank" rel="noopener" style="color:#007AFF;font-size:11px;">查看完整百科</a>';
-    } catch (e) {
-        intro.innerHTML = '<strong>' + name + '</strong><br>请联网后查看详细介绍';
+    } else {
+        intro.innerHTML = '<strong>' + name + '</strong><br>暂无本地介绍';
     }
 }
 

@@ -26,6 +26,8 @@ h2 { font-size: 12px; text-align: center; color: var(--text2); font-weight: 400;
 .qbtn.correct { background: rgba(48,209,88,0.2); border-color: #30D158; color: #30D158; }
 .qbtn.wrong { background: rgba(255,69,58,0.2); border-color: #FF453A; color: #FF453A; }
 .qbtn:disabled { pointer-events: none; opacity: 0.5; }
+.ref-btn { display: inline-block; padding: 5px 12px; margin: 3px 6px 3px 0; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s ease; text-decoration: none; }
+.ref-btn:hover { border-color: #007AFF; background: rgba(0,122,255,0.1); }
 #result-t { text-align: center; font-size: 14px; min-height: 20px; color: #30D158; font-weight: 500; }
 #result-t.error { color: #FF453A; }
 #quiz-intro { display: none; font-size: 13px; line-height: 1.6; color: var(--text2); padding: 10px 0; border-top: 1px solid var(--card-border); margin-top: 2px; }
@@ -145,7 +147,7 @@ function onMove(e){if(hoverRAF)return;hoverRAF=true;requestAnimationFrame(()=>{h
 function onClick(e){if(document.getElementById('quiz-area').classList.contains('active')){document.getElementById('quiz-area').classList.remove('active');document.getElementById('quiz-intro').style.display='none';document.getElementById('btn-next').style.display='none';selFeat=null;qTarget=null;qAnswered=false;}const rect=cv.getBoundingClientRect(),sx=W/rect.width,sy=H/rect.height,mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sy;if(view==='province'){const f=findPrefFeature(mx,my);if(!f)return;const id=f.properties.adcode;if(quizMode==='county'){switchToCounty(id,f.properties.name);}else if(ansPref[id]){switchToCounty(id,f.properties.name);}else{startPrefQuiz(f);}}else if(view==='county'){if(countyFeatures.length===0){backToProvince();return;}const c=findCountyFeature(mx,my);if(!c){backToProvince();return;}if(ansCounty[activeId]&&ansCounty[activeId][c.idx]!==undefined)return;startCountyQuiz(c.feat,c.idx);}}
 function startPrefQuiz(feat){qTarget={type:'prefecture',adcode:feat.properties.adcode};qAnswered=false;selFeat=feat;render();const allNames=GD_PREFECTURES.features.map(f=>f.properties.name),cor=feat.properties.name,w=allNames.filter(n=>n!==cor);shuffle(w);const ops=shuffleArr([cor,...w.slice(0,3)]);corIdx=ops.indexOf(cor);showQuiz('这是哪个地级行政区？',ops);}
 function startCountyQuiz(feat,idx){qTarget={type:'county',adcode:activeId,idx:idx};qAnswered=false;selFeat=feat;render();const allNames=countyFeatures.map(f=>f.properties.name),cor=feat.properties.name;let w=allNames.filter(n=>n!==cor);shuffle(w);if(w.length<3){const extra=GD_PREFECTURES.features.map(f=>f.properties.name).filter(n=>n!==activeName&&!w.includes(n));shuffle(extra);w=w.concat(extra.slice(0,3-w.length));}const ops=shuffleArr([cor,...w.slice(0,3)]);corIdx=ops.indexOf(cor);showQuiz('这是哪个县级行政区？',ops);}
-function showQuiz(q,ops){const a=document.getElementById('quiz-area');a.classList.add('active');document.getElementById('quiz-q').textContent=q;document.getElementById('result-t').textContent='';document.getElementById('result-t').classList.remove('error');const c=document.getElementById('quiz-ops');c.innerHTML='';ops.forEach((o,i)=>{const b=document.createElement('button');b.className='qbtn';b.textContent=o;b.onclick=()=>selOpt(i);c.appendChild(b);});}
+function showQuiz(q,ops){const a=document.getElementById('quiz-area');a.classList.add('active');document.getElementById('quiz-q').textContent=q;document.getElementById('result-t').textContent='';document.getElementById('result-t').classList.remove('error');const c=document.getElementById('quiz-ops');c.innerHTML='';ops.forEach((o,i)=>{const b=document.createElement('button');b.className='qbtn';b.textContent=o;b.onclick=()=>selOpt(i);c.appendChild(b);});if(window.innerWidth<=768){setTimeout(()=>{a.scrollIntoView({behavior:'smooth',block:'start'});},50);}}
 function selOpt(i){if(qAnswered)return;qAnswered=true;const cor=(i===corIdx);const allBtns=document.querySelectorAll('.qbtn');allBtns.forEach((b,j)=>{b.disabled=true;if(j===corIdx)b.classList.add('correct');if(j===i&&!cor)b.classList.add('wrong');});const r=document.getElementById('result-t');const corName=allBtns[corIdx].textContent;if(cor){r.textContent='\u2713 正确！';r.classList.remove('error');corCnt++;}else{r.textContent='\u2717 错误！正确答案是：'+corName;r.classList.add('error');wroCnt++;}document.getElementById('cc').textContent=corCnt;document.getElementById('wc').textContent=wroCnt;if(qTarget.type==='prefecture'){ansPref[qTarget.adcode]={correct:cor};}else{if(!ansCounty[qTarget.adcode])ansCounty[qTarget.adcode]={};ansCounty[qTarget.adcode][qTarget.idx]=cor;}updProg();render();document.getElementById('btn-next').style.display='block';
 loadWikiIntro(corName);}
 async function switchToCounty(adcode,name){document.getElementById('quiz-area').classList.remove('active');qTarget=null;qAnswered=false;selFeat=null;activeId=adcode;activeName=name;countyFeatures=[];hoverCountyIdx=-1;view='county';document.getElementById('btn-back').classList.add('show');const cd=GD_COUNTIES[String(adcode)];if(cd&&cd.features)countyFeatures=cd.features;const total=countyFeatures.length,prefFeat=GD_PREFECTURES.features.find(f=>f.properties.adcode===adcode);if(prefFeat)fitBoundsFeat(prefFeat);document.getElementById('hint-t').innerHTML=total>0?'当前：<strong>'+name+'</strong><br>共 '+total+' 个县级 · 点击答题，空白返回':'当前：<strong>'+name+'</strong><br>无下级划分 · 点击返回省级';updProg();render();}
@@ -157,45 +159,41 @@ function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.ra
 function shuffleArr(arr){shuffle(arr);return arr;}
 document.addEventListener('keydown',(e)=>{if(e.key==='Escape'&&view==='county')backToProvince();if(e.key==='r'&&e.ctrlKey){e.preventDefault();resetAll();}});
 
-async function loadWikiIntro(name) {
+function loadWikiIntro(name) {
     const intro = document.getElementById('quiz-intro');
-    intro.innerHTML = '<strong>' + name + '</strong><br>正在加载介绍...';
     intro.style.display = 'block';
-    try {
-        const searchUrl = 'https://baike.baidu.com/api/search?word=' + encodeURIComponent(name);
-        const ctrl1 = new AbortController();
-        const t1 = setTimeout(() => ctrl1.abort(), 5000);
-        const sResp = await fetch(searchUrl, { signal: ctrl1.signal });
-        clearTimeout(t1);
-        if (!sResp.ok) throw new Error('search fail');
-        const sData = await sResp.json();
-        let lemmaId = null;
-        if (sData && sData.data && sData.data.length > 0) {
-            lemmaId = sData.data[0].lemma_id;
+    const feat = GD_PREFECTURES.features.find(f => f.properties.name === name);
+    if (feat && feat.properties.desc) {
+        var desc = feat.properties.desc;
+        var refIdx = desc.indexOf('\n参考链接：');
+        if (refIdx !== -1) {
+            var mainDesc = desc.substring(0, refIdx);
+            mainDesc = mainDesc.replace(/\n/g, '<br>');
+            var refPart = desc.substring(refIdx + 1);
+            var refLines = refPart.split('\n');
+            var buttons = [];
+            for (var i = 0; i < refLines.length; i++) {
+                var line = refLines[i].trim();
+                if (line.startsWith('参考链接：')) continue;
+                var m = line.match(/^(.+?)：\s*(https?:\/\/\S+)/);
+                if (m) {
+                    buttons.push('<button class="ref-btn" onclick="window.open(\'' + m[2] + '\', \'_blank\')">' + m[1] + '</button>');
+                }
+            }
+            if (buttons.length > 0) {
+                intro.innerHTML = '<strong>' + name + '</strong><br>' + mainDesc + '<br><strong>参考链接</strong><br>' + buttons.join(' ');
+            } else {
+                intro.innerHTML = '<strong>' + name + '</strong><br>' + mainDesc;
+            }
+        } else {
+            desc = desc.replace(/\n/g, '<br>');
+            desc = desc.replace(/(https?:\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank">$1</a>');
+            intro.innerHTML = '<strong>' + name + '</strong><br>' + desc;
         }
-        if (!lemmaId) throw new Error('no lemma');
-        const lemmaUrl = 'https://baike.baidu.com/api/lemma?lemma_id=' + lemmaId;
-        const ctrl2 = new AbortController();
-        const t2 = setTimeout(() => ctrl2.abort(), 5000);
-        const lResp = await fetch(lemmaUrl, { signal: ctrl2.signal });
-        clearTimeout(t2);
-        if (!lResp.ok) throw new Error('lemma fail');
-        const lData = await lResp.json();
-        let summary = '';
-        if (lData && lData.summary) {
-            summary = lData.summary;
-        }
-        if (!summary) throw new Error('no summary');
-        summary = summary.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim();
-        if (summary.length > 150) {
-            summary = summary.substring(0, 150) + '...';
-        }
-        intro.innerHTML = '<strong>' + name + '</strong><br>' + summary + '<br><span style="color:var(--text3);font-size:11px;">——百度百科</span> <a href="https://baike.baidu.com/item/' + encodeURIComponent(name) + '" target="_blank" rel="noopener" style="color:#007AFF;font-size:11px;">查看完整百科</a>';
-    } catch (e) {
-        intro.innerHTML = '<strong>' + name + '</strong><br>请联网后查看详细介绍';
+    } else {
+        intro.innerHTML = '<strong>' + name + '</strong><br>暂无本地介绍';
     }
 }
-
 function nextQuiz() {
     document.getElementById('quiz-area').classList.remove('active');
     document.getElementById('quiz-intro').style.display = 'none';
